@@ -53,5 +53,11 @@ kubectl apply -f deployments/common/custom-resource-definitions.yaml
 kubectl apply -f deployments/daemon-set/nginx-plus-ingress.yaml
 kubectl apply -f deployments/service/nodeport.yaml
 
+# Expose the dashboard
+kubectl patch ds nginx-ingress -n nginx-ingress --type=json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "-nginx-status-allow-cidrs=0.0.0.0/0" }]'
+kubectl patch ds nginx-ingress -n nginx-ingress --type=json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/ports/-", "value": {"containerPort": 8080, "hostPort": 8080}}]'
+cd "${REPO_ROOT}"
+kubectl apply -f  nginx-plus-dashboard.yaml
+
 echo "Waiting for pods to be ready"
 kubectl rollout status ds/nginx-ingress -n nginx-ingress
