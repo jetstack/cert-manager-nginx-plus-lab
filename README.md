@@ -6,6 +6,7 @@ cert-manager provides full Venafi integration.
 
 ## Glossary
 * `Kubernetes`: an open-source container-orchestration system for automating application deployment, scaling, and management
+* `kubectl`: a command-line utility used by developers to control a Kubernetes cluster
 * `cert-manager`: a native Kubernetes certificate management controller.
 * `Ingress`: an Ingress controller in Kubernetes sits on the edge and is responsible for routing incoming traffic
 * `TLS Certificate`: a digital certificate to prove ownership of a given domain name used with encrypted connections
