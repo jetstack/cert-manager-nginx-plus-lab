@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: venafi-tpp-issuer
+  namespace: default
+spec:
+  venafi:
+    zone: Kubernetes
+    tpp:
+      url: https://<instance>/vedsdk # Change this to the URL of your TPP instance
+      credentialsRef:
+        name: tpp-auth-secret
