@@ -11,4 +11,6 @@ nodes:
         protocol: TCP
       - containerPort: 8080
         hostPort: 8080
+      - containerPort: 4430
+        hostPort: 4430
         protocol: TCP

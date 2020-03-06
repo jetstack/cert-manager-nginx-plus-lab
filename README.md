@@ -189,3 +189,74 @@ You will see an "insecure" warning, this is because for this lab we used a train
 Type "this is unsafe" on your keyboard (don't worry you won't see any letters appear), this will bypass the warning screen and you will be presented with our "Hello World" service.
 In the top bar click on "Not Secure" then click on "Certificate", here you can see the info about the certificate which we just issued.
 ![Chrome certificate details](./images/chrome-cert.png)
+
+
+### Securing Workload
+cert-manager cannot only be used to secure incoming traffic to your Kubernetes cluster but also to manage certificates for workloads on the cluster.
+In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
+
+First of all we have to build the NGINX Plus Docker image using:
+```console
+$ ./setup-docker-nginx-plus.sh
+```
+
+The deployment of this workload is in `workload.yaml`. The important part here is teh Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
+In this case we request a certificate for `workload.demo.cert-manager.io` that is valid for 90 days.
+```yaml
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: workload
+  namespace: default
+spec:
+  secretName: workload-tls
+  duration: 2160h # 90d
+  dnsNames:
+    - workload.demo.cert-manager.io
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
+```
+
+We can apply this configuration to the cluster using:
+```console
+$ kubectl apply -f workload.yaml
+```
+
+Once deployed we can see our workload running:
+```console
+$ kubectl get pods
+sysadmin@C6274862831:~$ kubectl get pods
+NAME                              READY   STATUS    RESTARTS   AGE
+nginx-workload-7d5fbb6f48-dz2wb   1/1     Running   0          1m
+```
+We can also see the certificate:
+```console
+$ kubectl get certificates
+NAME              READY   SECRET            AGE
+workload          True    workload-tls      1m
+```
+
+We see the `workload` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
+This secret is then attached to the container for NGINX to pick up the certificate and private key.
+
+### Testing the deployment
+
+#### Using curl
+The workload is exposed on the server on port `4430`
+You can see it being served using:
+```console
+$ curl https://localhost:4430 -k -v
+[...]
+* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
+* ALPN, server accepted to use http/1.1
+* Server certificate:
+*  subject: O=cert-manager
+*  start date: Feb 20 14:51:12 2020 GMT
+*  expire date: Feb 19 14:51:12 2021 GMT
+*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
+*  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
+```
+
+Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
