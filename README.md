@@ -59,7 +59,7 @@ Once NGINX Plus is deployed you can access the dashboard on port `http://<hostna
 Next we're installing cert-manager. cert-manager will allow you to integrate the Venafi platforms with Kubernetes to issue TLS certificates and provide identity management for applications across your cluster
 To install cert-manager run:
 ```console
-$ ./setup-cert-manager.sh
+$ kubectl apply -f "https://github.com/jetstack/cert-manager/releases/download/v0.13.1/cert-manager.yaml"
 ```
 This will install cert-manager in its default configuration inside the cluster.
 
