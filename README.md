@@ -52,6 +52,7 @@ Once they are there you can run:
 $ ./setup-nginx-plus.sh
 ```
 This will build the NGINX Plus Docker image locally and upload it to the local cluster, this might take a while.
+Once NGINX Plus is deployed you can access the dashboard on port `http://<hostname>:8080/dashboard.html` (The hostname can be found in your CloudShare environment under "Connection Details", then "External Address").
 
 ### Installing cert-manager
 Next we're installing cert-manager. cert-manager will allow you to integrate the Venafi platforms with Kubernetes to issue TLS certificates and provide identity management for applications across your cluster
