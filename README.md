@@ -119,6 +119,9 @@ Now this is set up and ready to go!
 To demonstrate a working ingress we built a sample "Hello World" service in `hello-world.yaml`.
 In this file we have an Ingress entry. Ingresses can be automatically secured by cert-mananger using special annotations on the Ingress resource.
 
+![architecture diagram](./images/diagram-ingress.png)
+This is a diagram of what we're building in this part of the lab.
+
 Open the `hello-world.yaml` file and change the host fields in the file to match the external hostname of your instance so we can test this from the outside world.
 This can be found in your CloudShare environment under "Connection Details", then "External Address".
 
