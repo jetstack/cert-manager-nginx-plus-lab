@@ -25,10 +25,12 @@ if [[ ! "$TMP_DIR" || ! -d "$TMP_DIR" ]]; then
   exit 1
 fi
 
+echo "Downloading nginxinc/kubernetes-ingress..."
 git clone https://github.com/nginxinc/kubernetes-ingress/ "$TMP_DIR"
 cd "$TMP_DIR"
 git checkout v1.6.2
 
+echo "Installing nginxinc/kubernetes-ingress..."
 kubectl apply -f deployments/common/ns-and-sa.yaml
 kubectl apply -f deployments/rbac/rbac.yaml
 kubectl apply -f deployments/common/default-server-secret.yaml

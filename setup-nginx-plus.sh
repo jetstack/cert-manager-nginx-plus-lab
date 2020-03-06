@@ -21,6 +21,7 @@ REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")" && pwd)}"
 
 source "${REPO_ROOT}/tools/lib.sh"
 
+echo "Installing build tools..."
 sudo apt-get update
 sudo apt-get install -y build-essential
 
@@ -32,6 +33,7 @@ if [[ ! "$TMP_DIR" || ! -d "$TMP_DIR" ]]; then
   exit 1
 fi
 
+echo "Downloading nginxinc/kubernetes-ingress..."
 git clone https://github.com/nginxinc/kubernetes-ingress/ "$TMP_DIR"
 cd "$TMP_DIR"
 git checkout v1.6.2
@@ -39,11 +41,14 @@ git checkout v1.6.2
 cp "$REPO_ROOT/nginx-repo.crt" ./
 cp "$REPO_ROOT/nginx-repo.key" ./
 
+echo "Building nginxinc/kubernetes-ingress with NGINX Plus..."
 make clean
 make container DOCKERFILE=DockerfileForPlus PREFIX=demo.cert-manager.io/nginx-plus-ingress
 
+echo "Loading NGINX Plus into the cluster..."
 tool kind load docker-image demo.cert-manager.io/nginx-plus-ingress:1.6.2
 
+echo "Installing nginxinc/kubernetes-ingress..."
 sed -i "s/nginx-plus-ingress:1.6.2/demo.cert-manager.io\/nginx-plus-ingress:1.6.2/g" deployments/daemon-set/nginx-plus-ingress.yaml
 kubectl apply -f deployments/common/ns-and-sa.yaml
 kubectl apply -f deployments/rbac/rbac.yaml
