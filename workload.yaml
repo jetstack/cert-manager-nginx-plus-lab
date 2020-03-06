@@ -1,0 +1,62 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: workload
+  namespace: default
+spec:
+  secretName: workload-tls
+  duration: 2160h # 90d
+  dnsNames:
+    - workload.demo.example.com
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
+---
+apiVersion:  apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-workload
+  name: nginx-workload
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-workload
+  template:
+    metadata:
+      labels:
+        app: nginx-workload
+    spec:
+      containers:
+        - image: demo.cert-manager.io/nginx-plus:local
+          name: nginx-workload
+          volumeMounts:
+            - mountPath: "/etc/nginx/ssl"
+              name: workload-tls
+              readOnly: true
+          ports:
+            - containerPort: 443
+              hostPort: 4430
+              name: https
+      volumes:
+        - name: workload-tls
+          secret:
+            secretName: workload-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-workload
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - name: https
+      port: 4430
+      protocol: TCP
+      targetPort: 4430
+  selector:
+    app: nginx-workload
