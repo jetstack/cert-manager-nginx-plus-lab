@@ -195,6 +195,9 @@ In the top bar click on "Not Secure" then click on "Certificate", here you can s
 cert-manager cannot only be used to secure incoming traffic to your Kubernetes cluster but also to manage certificates for workloads on the cluster.
 In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
 
+![architecture diagram](./images/diagram-workload.png)
+This is a diagram of what we're building in this part of the lab.
+
 First of all we have to build the NGINX Plus Docker image using:
 ```console
 $ ./setup-docker-nginx-plus.sh
