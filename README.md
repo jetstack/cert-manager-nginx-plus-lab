@@ -201,7 +201,7 @@ $ ./setup-docker-nginx-plus.sh
 ```
 
 The deployment of this workload is in `workload.yaml`. The important part here is teh Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
-In this case we request a certificate for `workload.demo.cert-manager.io` that is valid for 90 days.
+In this case we request a certificate for `workload.demo.example.com` that is valid for 90 days.
 ```yaml
 ---
 apiVersion: cert-manager.io/v1alpha2
@@ -213,7 +213,7 @@ spec:
   secretName: workload-tls
   duration: 2160h # 90d
   dnsNames:
-    - workload.demo.cert-manager.io
+    - workload.demo.example.com
   issuerRef:
     name: venafi-tpp-issuer
     kind: Issuer

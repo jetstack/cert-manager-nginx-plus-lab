@@ -8,7 +8,7 @@ spec:
   secretName: workload-tls
   duration: 2160h # 90d
   dnsNames:
-    - example.com
+    - workload.demo.example.com
   issuerRef:
     name: venafi-tpp-issuer
     kind: Issuer
