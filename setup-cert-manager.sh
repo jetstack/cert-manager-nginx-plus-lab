@@ -19,6 +19,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+echo "Installing cert-manager..."
 kubectl apply --validate=false -f "https://github.com/jetstack/cert-manager/releases/download/$VERSION/cert-manager.yaml"
 echo "Waiting for pods to be ready..."
 kubectl wait -n cert-manager --for=condition=Available deploy --all
