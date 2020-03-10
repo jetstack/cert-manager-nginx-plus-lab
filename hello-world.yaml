@@ -2,7 +2,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: hello-world
+  name: hello-world-ingress
   namespace: default
   annotations:
     kubernetes.io/ingress.class: "nginx"
@@ -18,13 +18,13 @@ spec:
         paths:
           - path: /
             backend:
-              serviceName: hello-world
+              serviceName: hello-world-service
               servicePort: 80
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-world
+  name: hello-world-deployment
   namespace: default
 spec:
   selector:
@@ -45,7 +45,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-world
+  name: hello-world-service
   namespace: default
 spec:
   ports:
