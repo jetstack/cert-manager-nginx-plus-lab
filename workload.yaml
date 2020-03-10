@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: workload
+  name: workload-certificate
   namespace: default
 spec:
   secretName: workload-tls
@@ -18,7 +18,7 @@ kind: Deployment
 metadata:
   labels:
     app: nginx-workload
-  name: nginx-workload
+  name: nginx-workload-deployment
   namespace: default
 spec:
   replicas: 1
@@ -49,7 +49,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-workload
+  name: nginx-workload-service
   namespace: default
 spec:
   type: NodePort
