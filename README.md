@@ -209,9 +209,193 @@ Now we can apply this configuration to the cluster using:
 $ kubectl apply -f venafi-issuer.yaml
 ```
 
-Now this is set up and ready to go! 
+Now this is set up and ready to go!
+
+### Issuing a Certificate
+
+Now we have everything set up we can issue a Certificate from our Venafi TPP instance. 
+Open the `certificate.yaml` file.
+```yaml
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: demo-certificate
+  namespace: default
+spec:
+  secretName: demo-tls
+  duration: 2160h # 90d
+  dnsNames:
+    - demo.example.com
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
+```
+
+Here we see a certificate resource for `demo.example.com` issued by the `venafi-tpp-issuer` we created before.
+We can nog add it to out cluster using:
+```console
+$ kubectl apply -f certificate.yaml
+```
+We can see it using:
+```console
+$ kubectl get certificates
+NAME               READY   SECRET     AGE
+demo-certificate   True    demo-tls   10s
+```
+When creating a `Certificate` resource cert-manager will generate a private key and a Certificate Signing Request. The private key is stored inside the secret we defined in teh configuration: `demo-tls`. This is stored in the Kubernetes secret store.
+The Certificate Signing Request (CSR) is stored inside a newly generated `CertificateRequest` resource.
+```console
+$ kubectl get certificaterequests
+NAME                          READY   AGE
+demo-certificate-4260521829   True    10s
+```
+To get more info about `CertificateRequest` resource, including the event history and any errors we can use `kubectl describe`:
+```console
+$ kubectl describe certificaterequest <name of the CertificateRequest>
+Name:         demo-certificate-4260521829
+Namespace:    default
+Labels:       <none>
+API Version:  cert-manager.io/v1alpha2
+Kind:         CertificateRequest
+Metadata:
+  Creation Timestamp:  2020-03-11T16:18:19Z
+  Generation:          1
+  Owner References:
+    API Version:           cert-manager.io/v1alpha2
+    Block Owner Deletion:  true
+    Controller:            true
+    Kind:                  Certificate
+    Name:                  demo-certificate
+    UID:                   58c9ef95-338a-41a2-a617-6a397b3cdbb9
+  Resource Version:        14429
+  Self Link:               /apis/cert-manager.io/v1alpha2/namespaces/cert-manager/certificaterequests/demo-certificate-4260521829
+  UID:                     66795d81-5ff7-4e89-9ffc-b7863592b95b
+Spec:
+  Csr:       LS0tLS1CRUdJTiBDRVJUSUZJQ0[...]
+  Duration:  2160h0m0s
+  Issuer Ref:
+    Kind:  Issuer
+    Name:  venafi-tpp-issuer
+Status:
+  Certificate:  LS0tLS1CRUdJTiBDRVJUSU1[...]
+    Last Transition Time:  2020-03-11T16:18:31Z
+    Message:               Certificate fetched from issuer successfully
+    Reason:                Issued
+    Status:                True
+    Type:                  Ready
+Events:
+  Type    Reason             Age   From          Message
+  ----    ------             ----  ----          -------
+  Normal  CertificateIssued  67s   cert-manager  Certificate fetched from issuer successfully
+
+```
+
+Here we see our generated CSR and Certificate (both base64 encoded), as well as detailed info of the status of the CertificateRequest.
+
+Once we see here that our certificate is issued by the Venafi TPP instance we can do the same describe on our secret resource that we asked cert-manager to put the certificate into:
+```console
+$ kubectl describe secret demo-tls
+Name:         demo-tls
+Namespace:    cert-manager
+Labels:       <none>
+Annotations:  cert-manager.io/alt-names: demo.example.com
+              cert-manager.io/certificate-name: demo-certificate
+              cert-manager.io/common-name: 
+              cert-manager.io/ip-sans: 
+              cert-manager.io/issuer-kind: Issuer
+              cert-manager.io/issuer-name: venafi-tpp-issuer
+              cert-manager.io/uri-sans: 
+
+Type:  kubernetes.io/tls
+
+Data
+====
+ca.crt:   0 bytes
+tls.crt:  3388 bytes
+tls.key:  1679 bytes
+```
+
+We now see `tls.crt` has the certificate in it.
+
+### Securing Workload
+cert-manager can be used to manage certificates for workloads on the cluster.
+In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
+
+![architecture diagram](./images/NGINXPlus-K8sWorkload.svg)
+
+This is a diagram of what we're building in this part of the lab.
+
+First of all we have to build the NGINX Plus Docker image using:
+```console
+$ ./setup-docker-nginx-plus.sh
+```
+
+The deployment of this workload is in `workload.yaml`. The important part here is teh Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
+In this case we request a certificate for `workload.demo.example.com` that is valid for 90 days.
+```yaml
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: workload-certificate
+  namespace: default
+spec:
+  secretName: workload-tls
+  duration: 2160h # 90d
+  dnsNames:
+    - workload.demo.example.com
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
+```
+
+We can apply this configuration to the cluster using:
+```console
+$ kubectl apply -f workload.yaml
+```
+
+Once deployed we can see our workload running:
+```console
+$ kubectl get pods
+sysadmin@C6274862831:~$ kubectl get pods
+NAME                              READY   STATUS    RESTARTS   AGE
+nginx-workload-7d5fbb6f48-dz2wb   1/1     Running   0          1m
+```
+We can also see the certificate:
+```console
+$ kubectl get certificates
+NAME                          READY   SECRET            AGE
+workload-certificate          True    workload-tls      1m
+```
+
+We see the `-certificate` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
+This secret is then attached to the container for NGINX to pick up the certificate and private key.
+
+### Testing the deployment
+
+#### Using curl
+The workload is exposed on the server on port `4430`
+You can see it being served using:
+
+```console
+$ curl https://localhost:4430 -k -v
+[...]
+* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
+* ALPN, server accepted to use http/1.1
+* Server certificate:
+*  subject: O=cert-manager
+*  start date: Feb 20 14:51:12 2020 GMT
+*  expire date: Feb 19 14:51:12 2021 GMT
+*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
+*  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
+```
+
+Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
 
 ### Securing an Ingress
+
+cert-manager can also be used to secure incoming traffic to your cluster.
 To demonstrate a working ingress we built a sample "Hello World" service in `hello-world.yaml`.
 In this file we have an Ingress entry. Ingresses can be automatically secured by cert-mananger using special annotations on the Ingress resource.
 
@@ -290,78 +474,3 @@ Type "this is unsafe" on your keyboard (don't worry you won't see any letters ap
 In the top bar click on "Not Secure" then click on "Certificate", here you can see the info about the certificate which we just issued.
 ![Chrome certificate details](./images/chrome-cert.png)
 
-
-### Securing Workload
-cert-manager cannot only be used to secure incoming traffic to your Kubernetes cluster but also to manage certificates for workloads on the cluster.
-In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
-
-![architecture diagram](./images/NGINXPlus-K8sWorkload.svg)
-
-This is a diagram of what we're building in this part of the lab.
-
-First of all we have to build the NGINX Plus Docker image using:
-```console
-$ ./setup-docker-nginx-plus.sh
-```
-
-The deployment of this workload is in `workload.yaml`. The important part here is teh Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
-In this case we request a certificate for `workload.demo.example.com` that is valid for 90 days.
-```yaml
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: workload-certificate
-  namespace: default
-spec:
-  secretName: workload-tls
-  duration: 2160h # 90d
-  dnsNames:
-    - workload.demo.example.com
-  issuerRef:
-    name: venafi-tpp-issuer
-    kind: Issuer
-```
-
-We can apply this configuration to the cluster using:
-```console
-$ kubectl apply -f workload.yaml
-```
-
-Once deployed we can see our workload running:
-```console
-$ kubectl get pods
-sysadmin@C6274862831:~$ kubectl get pods
-NAME                              READY   STATUS    RESTARTS   AGE
-nginx-workload-7d5fbb6f48-dz2wb   1/1     Running   0          1m
-```
-We can also see the certificate:
-```console
-$ kubectl get certificates
-NAME                          READY   SECRET            AGE
-workload-certificate          True    workload-tls      1m
-```
-
-We see the `-certificate` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
-This secret is then attached to the container for NGINX to pick up the certificate and private key.
-
-### Testing the deployment
-
-#### Using curl
-The workload is exposed on the server on port `4430`
-You can see it being served using:
-
-```console
-$ curl https://localhost:4430 -k -v
-[...]
-* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
-* ALPN, server accepted to use http/1.1
-* Server certificate:
-*  subject: O=cert-manager
-*  start date: Feb 20 14:51:12 2020 GMT
-*  expire date: Feb 19 14:51:12 2021 GMT
-*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
-*  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
-```
-
-Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.

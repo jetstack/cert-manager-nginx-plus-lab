@@ -1,0 +1,14 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: demo-certificate
+  namespace: default
+spec:
+  secretName: demo-tls
+  duration: 2160h # 90d
+  dnsNames:
+    - demo.example.com
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
