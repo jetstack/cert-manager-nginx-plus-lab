@@ -61,7 +61,17 @@ To install cert-manager run:
 ```console
 $ kubectl apply -f "https://github.com/jetstack/cert-manager/releases/download/v0.13.1/cert-manager.yaml"
 ```
-This will install cert-manager in its default configuration inside the cluster.
+This will install cert-manager in its default configuration inside the cluster. You can see it running using
+```console
+$ kubectl get pods -n cert-manager
+NAME                                      READY   STATUS    RESTARTS   AGE
+cert-manager-64b6c865d9-v8wfl             1/1     Running   0          5m24s
+cert-manager-cainjector-bfcf448b8-q8568   1/1     Running   0          5m24s
+cert-manager-webhook-7f5bf9cbdf-5pdkg     1/1     Running   0          5m24s
+```
+Here you will see cert-manager itself run along with 2 other components:
+* A webhook server to provide dynamic admission control over cert-manager resources. This means that cert-manager benefits from most of the same behavior that core Kubernetes resource have.
+* The CA injector controller is responsible for injecting the CA bundle into the webhook in order to allow the Kubernetes to ‘trust’ the webhook API server.
 
 ## Issuing certificates
 
