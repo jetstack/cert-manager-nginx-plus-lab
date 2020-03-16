@@ -1,39 +1,135 @@
-# Vanafi cert-manager lab
+# Automating X.509 machine identities in Kubernetes 
 
-In this lab we will set up a Kubernetes cluster in our lab instance. In this Kubernetes cluster we will deploy a demo service which will then be secured using cert-manager.
+## Securing NGINX (Plus) ingresses & workloads using Venafi and cert-manager
+
+### Overview 
+
+In this lab we will first identify the role and importance of machine identities (X.509 certificates) within organisations that are building new or 'next generation' infrastructures using containers, micro-services and other modern deployment technologies. Since Kubernetes has become the most pervasive 'Control Plane' for deploying and orchestrating containers, we will discuss the problems concerning identity and secure communications that must be solved for both developers and Information Security teams within this environment. 
+
+The lab will provide attendees with a real Kubernetes single node cluster environment and will include the following components: 
+
+- `Kubernetes`: a portable, extensible, open-source platform or control plane for managing containerised workloads and services.
+- `NGINX Plus`: an enterprise licensed NGINX instance configured as an Ingress Controller for Kubernetes providing enterprise‑grade delivery services for Kubernetes applications.
+- `NGINX`: an open-source licensed NGINX instance configured as a Kubernetes workload.
+- `Venafi`: an enterprise platform for controlling the end to end lifecycle for all X.509 machine identities across all infrastructures
+- `cert-manager`: a native [Kubernetes](https://kubernetes.io/) certificate management controller. It can help with issuing certificates from a variety of sources, such as [HashiCorp Vault](https://www.vaultproject.io/) and [Venafi](https://www.venafi.com/), or a simple signing key pair, or self signed certificate.
+
+The lab will step through performing the following task: 
+
+1. Installing `cert-manager`
+2. Testing `cert-manager`
+   1. Creating a Venafi credential stored in the Kubernetes secrets store
+   2. Defining and configuring a `venafi issuer` resource
+   3. Defining and configuring a `certificate` resource to use the `venafi issuer` 
+   4. Requesting certificates using the `certificate` resource
+3. Building and loading an `NGINX Plus` image into the Kubernetes cluster
+4. Deploying and Securing an `NGINX Plus` Ingress controller using the `venafi issuer` resource
+   1. Testing the `NGINX Plus` Ingress controller 
+5. Deploying and Securing an `NGINX` workload using the `venafi issuer` resource
+   1. Testing the `NGINX` workload
+
+## Kubernetes
+
+Kubernetes is a portable, extensible, open-source platform for managing containerised workloads and services, that facilitates both declarative configuration and automation. It has a large, rapidly growing ecosystem. Kubernetes services, support, and tools are widely available.  It is already in production with many of the worlds largest organisations and in some cases has been used to build entire next generation banking platforms.  
+
+When you deploy Kubernetes, you get a cluster. A Kubernetes cluster consists of a set of worker machines, called nodes, that run containerised applications. Every cluster has at least one worker node.
+
+The worker node(s) host the pods that are the components of the application. The Control Plane manages the worker nodes and the pods in the cluster. In production environments, the Control Plane usually runs across multiple computers and a cluster usually runs multiple nodes, providing fault-tolerance and high availability.
+
+## NGINX
+
+### NGINX Ingress Controller for Kubernetes 
+
+The NGINX Ingress Controller for Kubernetes provides enterprise‑grade delivery services for Kubernetes applications, with benefits for users of both open source NGINX and NGINX Plus. With the NGINX Ingress Controller for Kubernetes, you get basic load balancing, SSL/TLS termination, support for URI rewrites, and upstream SSL/TLS encryption. NGINX Plus users additionally get session persistence for stateful applications and JSON Web Token (JWT) authentication for APIs.
+
+![](images/NGINX Plus.svg)
+
+*Enterprise-grade application delivery for Kubernetes*
+
+By default, pods of Kubernetes services are not accessible from the external network, but only by other pods within the Kubernetes cluster. Kubernetes has a built‑in configuration for HTTP load balancing, called Ingress, that defines rules for external connectivity to Kubernetes services. Users who need to provide external access to their Kubernetes services create an *Ingress resource* that defines rules, including the URI path, backing service name, and other information. The Ingress controller can then automatically program a frontend load balancer to enable Ingress configuration. The NGINX Ingress Controller for Kubernetes is what enables Kubernetes to configure NGINX and NGINX Plus for load balancing Kubernetes services.
+
+## Venafi 
+
+The Venafi platform has been adopted by many of the worlds largest organisations for controlling the end to end lifecycle for all X.509 machine identities across their entire infrastructure. This includes infrastructures built upon traditional technologies such as load balancers, web servers, applications servers etc. and next generation on-premise, cloud, cloud native and hybrid environments built using next generation technology stacks including Kubernetes, containers, micro-services, service meshes etc.
+
+## The Importance of Machine Identities
+
+Enterprises are shifting to new highly automated, often ephemeral, container and micro-service based infrastructures and applications; these are often deployed and executed within zero trust networks. The ability to assert identity, establish trust and subsequently enable secure communications between all of the actors and (containers) entities within 'new compute' environments has never been more important. 
+
+Whilst the traditional PKI model is far from perfect, it is still the only viable and widely accepted way to cryptographicly establish trust between machines. It is also the only standard way to enable encrypted communications between machines. Its hierarchical trust model means it's still currently the only way enterprises can truly scale and manage trust across their organisations. 
+
+For large enterprises, the ability to effectively manage, control and automate the life-cycle for X.509 certificates across their traditional infrastructures has always been challenging. When this is done badly it has led to unknowns that turn into costly certificate-related outages, such as those seen at LinkedIn, O2, Softbank, Microsoft Azure and many others. Even worse, massive data breaches like that of Equifax in 2017 are often made worse by untracked, expiring certificates blind to attack.
+
+For enterprises shifting to new container and micro-service based infrastructures, this problem is now significantly compounded due to highly automated build and deployment processes. Inherent capabilities such as auto deployment and scaling means that that traditional processes for handling machine identities will not work. 
+
+### Problems to solve
+
+- How do developers and security teams assert that containers are what they think they are ?
+- How do containers assert that other containers are what they think they are ? 
+- How do developers and security teams enable security approved trust anchors to be automatically bound to externally facing ingress points ? 
+- How do developers and security teams automate the boot-strapping of containers, micro-services and workloads with valid machine identities ? 
+- How do developers and security teams validate that only authorised containers, micro-services and workloads can interoperate with other containers, micro-services, workloads and external services ?
+
+## JetStack
+
+JetStack are a fast-growing Kubernetes professional services company that prides itself on helping startups and enterprises alike in their path to modern cloud-native infrastructure. They are the inventor and primary maintainer for  cert-manager, a Kubernetes add-on that automates the management and issuance of TLS certificates from various issuing sources including Venafi. 
+
+### cert-manager 
+
+“cert-manager” is a native [Kubernetes](https://kubernetes.io/) certificate management controller. It can help with issuing certificates from a variety of sources, such as [Let’s Encrypt](https://letsencrypt.org/), [HashiCorp Vault](https://www.vaultproject.io/), [Venafi](https://www.venafi.com/), or a simple signing key pair, or self signed certificate.
+
+It will ensure certificates are valid and up to date, and attempt to renew certificates at a configured time before expiry. 
+
+cert-manager is implemented using custom resource definitions (CRD’s) which extends Kubernetes to include a certificate “issuer” and a “certificate” resource type, thus elevating machine identities to first class native services within Kubernetes clusters.
+
+“cert-manager” can be configured to operate within specific namespaces or across the entire Kubernetes cluster. 
+
 cert-manager is Kubernetes addon for issuing and managing TLS certificates & application identities in a Kubernetes cluster, providing deep integration points with native Kubernetes features for managing network traffic.
 cert-manager provides full Venafi integration.
 
-## Glossary
+# lab
+
+The purpose of this lab is to familiarise architects, developers, security teams and other stakeholders with the steps required to configure Kubernetes clusters to use an NGINX (plus) ingress and automatically secure it with a TLS certificate using pre-defined policies on the Venafi platform combined with custom resource definitions within Kubernetes. cert-manager will be used to fully automate this process including certificate renewals when needed. The Venafi platform policies are typically controlled by information security teams and are used to determine all of the characteristics for the TLS certificates used within the Kubernetes cluster, including which certificate authority (CA) is used to issue the certificate. 
+
+The lab will also demonstrate how cert-manager can be used to automate TLS lifecycles for Kubernetes workloads that also use NGINX/
+
+The lab will show how to set up a Kubernetes cluster and deploy a demo service which will then be automatically secured using cert-manager.
+
+
+## Kubernetes Glossary
 * `Kubernetes`: an open-source container-orchestration system for automating application deployment, scaling, and management
-* `kubectl`: a command-line utility used by developers to control a Kubernetes cluster
+* `kubectl`: a command-line utility (CLI) used by developers to control and interact with Kubernetes clusters.
 * `cert-manager`: a native Kubernetes certificate management controller.
 * `Ingress`: an Ingress controller in Kubernetes sits on the edge and is responsible for routing incoming traffic
 * `TLS Certificate`: a digital certificate to prove ownership of a given domain name used with encrypted connections
 * `Certificate Authority`: an entity that issues digital certificates which are thereafter trusted
+* `workload`:
+* `kind`: "Kubernetes in Docker" is used to create a development Kubernetes cluster which will run on a single machine for testing and development.
 
 
-## Setup
+## Pre-requisites
 We need to install Kubernetes on the machine first, as well as an ingress controller to forward any incoming web traffic.
 Then we will install and configure cert-manager to work with Venafi Trust Protection Platform.
 
-### Setting up cluster
-This script will install kubectl and kind. 
-Kubectl is used by developers and sysadmins to interact with the Kubernetes cluster from the command line. We will use it to configure all resources on the cluster as well as verifying the status of it.
-Kind (Kubernetes in Docker) is what is used to create a development Kubernetes cluster which will run on a single machine for testing and development.
+### Setting up a single node cluster
+
+To save time the lab will provide a script called `setup-k8s.sh`. The script will install a Kubernetes single node cluster and the `kubectl`CLI using `kind`. We will use `kubectl` to configure all resources on the cluster as well as verifying the status of it.
+
 The cluster will be set up with port 80 and 443 exposed on the host network so we can access the services we're about to setup on this cluster from the public internet.
-To start the setup run: 
+
+To install run the script: 
+
 ```console
 $ ./setup-k8s.sh
 ```
 
-Once this is installed we can confirm the installation using `kubectl`:
+Once  installed  confirm the installation using `kubectl`:
 ```console
 $ kubectl get nodes
 NAME                 STATUS   ROLES    AGE   VERSION
 kind-control-plane   Ready    master   72s   v1.17.0
 ```
-Here we will see all nodes in our cluster, which in one case is just one. If you see `NotReady` under status that means not all services have been started yet. You might have to wait a little bit.
+You should see the list of nodes in the cluster, in this case it's just one. If you see `NotReady` under status that means not all services have been started yet. You might have to wait a little bit.
 
 ### Installing the NGINX Ingress
 Now we are ready to configure our cluster to allow the services we deploy to be accessible from the open internet securely. 
@@ -61,17 +157,7 @@ To install cert-manager run:
 ```console
 $ kubectl apply -f "https://github.com/jetstack/cert-manager/releases/download/v0.13.1/cert-manager.yaml"
 ```
-This will install cert-manager in its default configuration inside the cluster. You can see it running using
-```console
-$ kubectl get pods -n cert-manager
-NAME                                      READY   STATUS    RESTARTS   AGE
-cert-manager-64b6c865d9-v8wfl             1/1     Running   0          5m24s
-cert-manager-cainjector-bfcf448b8-q8568   1/1     Running   0          5m24s
-cert-manager-webhook-7f5bf9cbdf-5pdkg     1/1     Running   0          5m24s
-```
-Here you will see cert-manager itself run along with 2 other components:
-* A webhook server to provide dynamic admission control over cert-manager resources. This means that cert-manager benefits from most of the same behavior that core Kubernetes resource have.
-* The CA injector controller is responsible for injecting the CA bundle into the webhook in order to allow the Kubernetes to ‘trust’ the webhook API server.
+This will install cert-manager in its default configuration inside the cluster.
 
 ## Issuing certificates
 
@@ -129,7 +215,7 @@ Now this is set up and ready to go!
 To demonstrate a working ingress we built a sample "Hello World" service in `hello-world.yaml`.
 In this file we have an Ingress entry. Ingresses can be automatically secured by cert-mananger using special annotations on the Ingress resource.
 
-![architecture diagram](./images/diagram-ingress.png)
+![](images/NGINX Plus - K8s.svg)
 
 This is a diagram of what we're building in this part of the lab.
 
@@ -141,7 +227,7 @@ The `cert-manager.io/issuer` annotation tells cert-manager to install a TLS cert
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: hello-world-ingress
+  name: hello-world
   namespace: default
   annotations:
     kubernetes.io/ingress.class: "nginx"
@@ -209,7 +295,7 @@ In the top bar click on "Not Secure" then click on "Certificate", here you can s
 cert-manager cannot only be used to secure incoming traffic to your Kubernetes cluster but also to manage certificates for workloads on the cluster.
 In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
 
-![architecture diagram](./images/diagram-workload.png)
+![architecture diagram](images/NGINX Plus - K8s Workload.svg)
 This is a diagram of what we're building in this part of the lab.
 
 First of all we have to build the NGINX Plus Docker image using:
@@ -224,7 +310,7 @@ In this case we request a certificate for `workload.demo.example.com` that is va
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: workload-certificate
+  name: workload
   namespace: default
 spec:
   secretName: workload-tls
@@ -255,7 +341,7 @@ NAME              READY   SECRET            AGE
 workload          True    workload-tls      1m
 ```
 
-We see the `workload-certificate` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
+We see the `workload` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
 This secret is then attached to the container for NGINX to pick up the certificate and private key.
 
 ### Testing the deployment
@@ -263,6 +349,7 @@ This secret is then attached to the container for NGINX to pick up the certifica
 #### Using curl
 The workload is exposed on the server on port `4430`
 You can see it being served using:
+
 ```console
 $ curl https://localhost:4430 -k -v
 [...]
