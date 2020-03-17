@@ -42,7 +42,7 @@ The worker node(s) host the pods that are the components of the application. The
 
 The NGINX Ingress Controller for Kubernetes provides enterprise‑grade delivery services for Kubernetes applications, with benefits for users of both open source NGINX and NGINX Plus. With the NGINX Ingress Controller for Kubernetes, you get basic load balancing, SSL/TLS termination, support for URI rewrites, and upstream SSL/TLS encryption. NGINX Plus users additionally get session persistence for stateful applications and JSON Web Token (JWT) authentication for APIs.
 
-![](images/NGINX Plus.svg)
+![](./images/NGINX Plus.svg)
 
 *Enterprise-grade application delivery for Kubernetes*
 
