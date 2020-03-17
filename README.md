@@ -70,9 +70,9 @@ For enterprises shifting to new container and micro-service based infrastructure
 - How do developers and security teams automate the boot-strapping of containers, micro-services and workloads with valid machine identities ? 
 - How do developers and security teams validate that only authorised containers, micro-services and workloads can interoperate with other containers, micro-services, workloads and external services ?
 
-## JetStack
+## Jetstack
 
-JetStack are a fast-growing Kubernetes professional services company that prides itself on helping startups and enterprises alike in their path to modern cloud-native infrastructure. They are the inventor and primary maintainer for  cert-manager, a Kubernetes add-on that automates the management and issuance of TLS certificates from various issuing sources including Venafi. 
+Jetstack are a fast-growing Kubernetes professional services company that prides itself on helping startups and enterprises alike in their path to modern cloud-native infrastructure. They are the inventor and primary maintainer for  cert-manager, a Kubernetes add-on that automates the management and issuance of TLS certificates from various issuing sources including Venafi. 
 
 ### cert-manager 
 
@@ -80,9 +80,9 @@ JetStack are a fast-growing Kubernetes professional services company that prides
 
 It will ensure certificates are valid and up to date, and attempt to renew certificates at a configured time before expiry. 
 
-cert-manager is implemented using custom resource definitions (CRD’s) which extends Kubernetes to include a certificate “issuer” and a “certificate” resource type, thus elevating machine identities to first class native services within Kubernetes clusters.
+cert-manager is implemented using custom resource definitions (CRDs) which extends Kubernetes to include a certificate “issuer” and a “certificate” resource type, thus elevating machine identities to first class native services within Kubernetes clusters.
 
-“cert-manager” can be configured to operate within specific namespaces or across the entire Kubernetes cluster. 
+cert-manager can be configured to operate within specific namespaces or across the entire Kubernetes cluster. 
 
 cert-manager is Kubernetes addon for issuing and managing TLS certificates & application identities in a Kubernetes cluster, providing deep integration points with native Kubernetes features for managing network traffic.
 cert-manager provides full Venafi integration.
@@ -155,7 +155,7 @@ Once NGINX Plus is deployed you can access the dashboard on port `http://<hostna
 Next we're installing cert-manager. cert-manager will allow you to integrate the Venafi platforms with Kubernetes to issue TLS certificates and provide identity management for applications across your cluster
 To install cert-manager run:
 ```console
-$ kubectl apply -f "https://github.com/jetstack/cert-manager/releases/download/v0.13.1/cert-manager.yaml"
+$ kubectl apply -f "https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.yaml"
 ```
 This will install cert-manager in its default configuration inside the cluster.
 
@@ -215,7 +215,7 @@ Now this is set up and ready to go!
 To demonstrate a working ingress we built a sample "Hello World" service in `hello-world.yaml`.
 In this file we have an Ingress entry. Ingresses can be automatically secured by cert-mananger using special annotations on the Ingress resource.
 
-![](images/NGINX Plus - K8s.svg)
+![](./images/NGINXPlus-K8s.svg)
 
 This is a diagram of what we're building in this part of the lab.
 
@@ -295,7 +295,8 @@ In the top bar click on "Not Secure" then click on "Certificate", here you can s
 cert-manager cannot only be used to secure incoming traffic to your Kubernetes cluster but also to manage certificates for workloads on the cluster.
 In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
 
-![architecture diagram](images/NGINX Plus - K8s Workload.svg)
+![architecture diagram](./images/NGINXPlus-K8sWorkload.svg)
+
 This is a diagram of what we're building in this part of the lab.
 
 First of all we have to build the NGINX Plus Docker image using:
