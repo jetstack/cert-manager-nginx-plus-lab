@@ -227,7 +227,7 @@ The `cert-manager.io/issuer` annotation tells cert-manager to install a TLS cert
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: hello-world
+  name: hello-world-ingress
   namespace: default
   annotations:
     kubernetes.io/ingress.class: "nginx"
@@ -311,7 +311,7 @@ In this case we request a certificate for `workload.demo.example.com` that is va
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: workload
+  name: workload-certificate
   namespace: default
 spec:
   secretName: workload-tls
@@ -338,11 +338,11 @@ nginx-workload-7d5fbb6f48-dz2wb   1/1     Running   0          1m
 We can also see the certificate:
 ```console
 $ kubectl get certificates
-NAME              READY   SECRET            AGE
-workload          True    workload-tls      1m
+NAME                          READY   SECRET            AGE
+workload-certificate          True    workload-tls      1m
 ```
 
-We see the `workload` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
+We see the `-certificate` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
 This secret is then attached to the container for NGINX to pick up the certificate and private key.
 
 ### Testing the deployment
