@@ -233,7 +233,7 @@ spec:
 ```
 
 Here we see a certificate resource for `demo.example.com` issued by the `venafi-tpp-issuer` we created before.
-We can nog add it to out cluster using:
+We can w add it to our cluster using:
 ```console
 $ kubectl apply -f certificate.yaml
 ```
@@ -243,7 +243,7 @@ $ kubectl get certificates
 NAME               READY   SECRET     AGE
 demo-certificate   True    demo-tls   10s
 ```
-When creating a `Certificate` resource cert-manager will generate a private key and a Certificate Signing Request. The private key is stored inside the secret we defined in teh configuration: `demo-tls`. This is stored in the Kubernetes secret store.
+When creating a `Certificate` resource, cert-manager will generate a private key and a Certificate Signing Request. The private key is stored inside the Secret resource we defined in the configuration: `demo-tls`. This is stored in the Kubernetes secret store.
 The Certificate Signing Request (CSR) is stored inside a newly generated `CertificateRequest` resource.
 ```console
 $ kubectl get certificaterequests
@@ -291,9 +291,9 @@ Events:
 
 ```
 
-Here we see our generated CSR and Certificate (both base64 encoded), as well as detailed info of the status of the CertificateRequest.
+Here we see our generated CSR and Certificate (both base64 encoded), as well as detailed info of the status of the CertificateRequest. More information about this resource can be found in the [cert-manager documentatiom](https://cert-manager.io/docs/concepts/certificaterequest/)
 
-Once we see here that our certificate is issued by the Venafi TPP instance we can do the same describe on our secret resource that we asked cert-manager to put the certificate into:
+Once we see here that our certificate is issued by the Venafi TPP instance we can do the same describe on the Secret resource that we asked cert-manager to put the certificate into:
 ```console
 $ kubectl describe secret demo-tls
 Name:         demo-tls
