@@ -233,7 +233,7 @@ spec:
 ```
 
 Here we see a certificate resource for `demo.example.com` issued by the `venafi-tpp-issuer` we created before.
-We can w add it to our cluster using:
+We can add it to our cluster using:
 ```console
 $ kubectl apply -f certificate.yaml
 ```
@@ -291,7 +291,7 @@ Events:
 
 ```
 
-Here we see our generated CSR and Certificate (both base64 encoded), as well as detailed info of the status of the CertificateRequest. More information about this resource can be found in the [cert-manager documentatiom](https://cert-manager.io/docs/concepts/certificaterequest/)
+Here we see our generated CSR and Certificate (both base64 encoded), as well as detailed info of the status of the CertificateRequest. More information about this resource can be found in the [cert-manager documentation](https://cert-manager.io/docs/concepts/certificaterequest/)
 
 Once we see here that our certificate is issued by the Venafi TPP instance we can do the same describe on the Secret resource that we asked cert-manager to put the certificate into:
 ```console
@@ -391,7 +391,7 @@ $ curl https://localhost:4430 -k -v
 *  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
 ```
 
-Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
+Notice that the issuer in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
 
 ### Securing an Ingress
 
@@ -443,7 +443,7 @@ The NGINX Ingress controller has native support for reading TLS secrets from Kub
 #### Using curl
 You can see it being served using:
 ```console
-$ curl https://<hostname> -k -v
+$ curl -k -v https://<hostname>
 [...]
 * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
 * ALPN, server accepted to use http/1.1
