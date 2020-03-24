@@ -209,90 +209,117 @@ Now we can apply this configuration to the cluster using:
 $ kubectl apply -f venafi-issuer.yaml
 ```
 
-Now this is set up and ready to go! 
+Now this is set up and ready to go!
 
-### Securing an Ingress
-To demonstrate a working ingress we built a sample "Hello World" service in `hello-world.yaml`.
-In this file we have an Ingress entry. Ingresses can be automatically secured by cert-mananger using special annotations on the Ingress resource.
+### Issuing a Certificate
 
-![](./images/NGINXPlus-K8s.svg)
-
-This is a diagram of what we're building in this part of the lab.
-
-Open the `hello-world.yaml` file and change the host fields in the file to match the external hostname of your instance so we can test this from the outside world.
-This can be found in your CloudShare environment under "Connection Details", then "External Address".
-
-The `cert-manager.io/issuer` annotation tells cert-manager to install a TLS certificate received from the Issuer we installed earlier.
+Now we have everything set up we can issue a Certificate from our Venafi TPP instance. 
+Open the `certificate.yaml` file.
 ```yaml
-apiVersion: extensions/v1beta1
-kind: Ingress
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
 metadata:
-  name: hello-world-ingress
+  name: demo-certificate
   namespace: default
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-    cert-manager.io/issuer: "venafi-tpp-issuer"
 spec:
-  tls:
-    - hosts:
-        - <place external hostname here>
-      secretName: venafi-demo-tls
-  rules:
-    - host: <place external hostname here>
-    [...]
+  secretName: demo-tls
+  duration: 2160h # 90d
+  dnsNames:
+    - demo.example.com
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
 ```
 
-After changing and saving the file we can deploy it using `kubectl apply -f hello-world.yaml`
-
-Now we have an Ingress deployed with a `cert-manager.io/issuer` annotation, this will tell cert-manager to use a specific issuer to automatically fetch and assign a certificate according to the policy you have configured on your Issuer resource.
-We can see them being issued using:
+Here we see a certificate resource for `demo.example.com` issued by the `venafi-tpp-issuer` we created before.
+We can add it to our cluster using:
 ```console
-$ kubectl get certificate
-NAME              READY   SECRET            AGE
-venafi-demo-tls   True    venafi-demo-tls   1m
+$ kubectl apply -f certificate.yaml
 ```
-The private key and certificate have been saved into `venafi-demo-tls` inside the Kubernetes secret store from where NGINX picks it up.
-The NGINX Ingress controller has native support for reading TLS secrets from Kubernetes.
-
-### Testing the deployment
-
-#### Using curl
-You can see it being served using:
+We can see it using:
 ```console
-$ curl https://<hostname> -k -v
-[...]
-* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
-* ALPN, server accepted to use http/1.1
-* Server certificate:
-*  subject: O=cert-manager
-*  start date: Feb 20 14:51:12 2020 GMT
-*  expire date: Feb 19 14:51:12 2021 GMT
-*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
-*  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
+$ kubectl get certificates
+NAME               READY   SECRET     AGE
+demo-certificate   True    demo-tls   10s
 ```
-Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
+When creating a `Certificate` resource, cert-manager will generate a private key and a Certificate Signing Request. The private key is stored inside the Secret resource we defined in the configuration: `demo-tls`. This is stored in the Kubernetes secret store.
+The Certificate Signing Request (CSR) is stored inside a newly generated `CertificateRequest` resource.
+```console
+$ kubectl get certificaterequests
+NAME                          READY   AGE
+demo-certificate-4260521829   True    10s
+```
+To get more info about `CertificateRequest` resource, including the event history and any errors we can use `kubectl describe`:
+```console
+$ kubectl describe certificaterequest <name of the CertificateRequest>
+Name:         demo-certificate-4260521829
+Namespace:    default
+Labels:       <none>
+API Version:  cert-manager.io/v1alpha2
+Kind:         CertificateRequest
+Metadata:
+  Creation Timestamp:  2020-03-11T16:18:19Z
+  Generation:          1
+  Owner References:
+    API Version:           cert-manager.io/v1alpha2
+    Block Owner Deletion:  true
+    Controller:            true
+    Kind:                  Certificate
+    Name:                  demo-certificate
+    UID:                   58c9ef95-338a-41a2-a617-6a397b3cdbb9
+  Resource Version:        14429
+  Self Link:               /apis/cert-manager.io/v1alpha2/namespaces/cert-manager/certificaterequests/demo-certificate-4260521829
+  UID:                     66795d81-5ff7-4e89-9ffc-b7863592b95b
+Spec:
+  Csr:       LS0tLS1CRUdJTiBDRVJUSUZJQ0[...]
+  Duration:  2160h0m0s
+  Issuer Ref:
+    Kind:  Issuer
+    Name:  venafi-tpp-issuer
+Status:
+  Certificate:  LS0tLS1CRUdJTiBDRVJUSU1[...]
+    Last Transition Time:  2020-03-11T16:18:31Z
+    Message:               Certificate fetched from issuer successfully
+    Reason:                Issued
+    Status:                True
+    Type:                  Ready
+Events:
+  Type    Reason             Age   From          Message
+  ----    ------             ----  ----          -------
+  Normal  CertificateIssued  67s   cert-manager  Certificate fetched from issuer successfully
 
-#### Using Firefox
+```
 
-Open your browser and browse to the hostname of your instance.
-You will see an "insecure" warning, this is because for this lab we used a training certificate authority which is not trusted by our computer.
-![Firefox warning](./images/ff-error.png)
-Click on "Advanced" and then to "View Certificate", here you can see the info about the certificate which we just issued.
-![Firefox bypass button](./images/ff-bypass.png)
-If you click "Accept the risk and continue" you will be presented with our "Hello World" service.
-![Firefox certificate details](./images/ff-cert.png)
+Here we see our generated CSR and Certificate (both base64 encoded), as well as detailed info of the status of the CertificateRequest. More information about this resource can be found in the [cert-manager documentation](https://cert-manager.io/docs/concepts/certificaterequest/)
 
-#### Using Chrome
-Open your browser and browse to the hostname of your instance.
-You will see an "insecure" warning, this is because for this lab we used a training certificate authority which is not trusted by our computer.
-![Chrome warning](./images/chrome-error.png)
-Type "this is unsafe" on your keyboard (don't worry you won't see any letters appear), this will bypass the warning screen and you will be presented with our "Hello World" service.
-In the top bar click on "Not Secure" then click on "Certificate", here you can see the info about the certificate which we just issued.
-![Chrome certificate details](./images/chrome-cert.png)
+Once we see here that our certificate is issued by the Venafi TPP instance we can do the same describe on the Secret resource that we asked cert-manager to put the certificate into:
+```console
+$ kubectl describe secret demo-tls
+Name:         demo-tls
+Namespace:    cert-manager
+Labels:       <none>
+Annotations:  cert-manager.io/alt-names: demo.example.com
+              cert-manager.io/certificate-name: demo-certificate
+              cert-manager.io/common-name: 
+              cert-manager.io/ip-sans: 
+              cert-manager.io/issuer-kind: Issuer
+              cert-manager.io/issuer-name: venafi-tpp-issuer
+              cert-manager.io/uri-sans: 
 
+Type:  kubernetes.io/tls
+
+Data
+====
+ca.crt:   0 bytes
+tls.crt:  3388 bytes
+tls.key:  1679 bytes
+```
+
+We now see `tls.crt` has the certificate in it.
 
 ### Securing Workload
-cert-manager cannot only be used to secure incoming traffic to your Kubernetes cluster but also to manage certificates for workloads on the cluster.
+cert-manager can be used to manage certificates for workloads on the cluster.
 In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
 
 ![architecture diagram](./images/NGINXPlus-K8sWorkload.svg)
@@ -364,4 +391,86 @@ $ curl https://localhost:4430 -k -v
 *  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
 ```
 
+Notice that the issuer in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
+
+### Securing an Ingress
+
+cert-manager can also be used to secure incoming traffic to your cluster.
+To demonstrate a working ingress we built a sample "Hello World" service in `hello-world.yaml`.
+In this file we have an Ingress entry. Ingresses can be automatically secured by cert-mananger using special annotations on the Ingress resource.
+
+![](./images/NGINXPlus-K8s.svg)
+
+This is a diagram of what we're building in this part of the lab.
+
+Open the `hello-world.yaml` file and change the host fields in the file to match the external hostname of your instance so we can test this from the outside world.
+This can be found in your CloudShare environment under "Connection Details", then "External Address".
+
+The `cert-manager.io/issuer` annotation tells cert-manager to install a TLS certificate received from the Issuer we installed earlier.
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: hello-world-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/issuer: "venafi-tpp-issuer"
+spec:
+  tls:
+    - hosts:
+        - <place external hostname here>
+      secretName: venafi-demo-tls
+  rules:
+    - host: <place external hostname here>
+    [...]
+```
+
+After changing and saving the file we can deploy it using `kubectl apply -f hello-world.yaml`
+
+Now we have an Ingress deployed with a `cert-manager.io/issuer` annotation, this will tell cert-manager to use a specific issuer to automatically fetch and assign a certificate according to the policy you have configured on your Issuer resource.
+We can see them being issued using:
+```console
+$ kubectl get certificate
+NAME              READY   SECRET            AGE
+venafi-demo-tls   True    venafi-demo-tls   1m
+```
+The private key and certificate have been saved into `venafi-demo-tls` inside the Kubernetes secret store from where NGINX picks it up.
+The NGINX Ingress controller has native support for reading TLS secrets from Kubernetes.
+
+### Testing the deployment
+
+#### Using curl
+You can see it being served using:
+```console
+$ curl -k -v https://<hostname>
+[...]
+* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
+* ALPN, server accepted to use http/1.1
+* Server certificate:
+*  subject: O=cert-manager
+*  start date: Feb 20 14:51:12 2020 GMT
+*  expire date: Feb 19 14:51:12 2021 GMT
+*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
+*  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
+```
 Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
+
+#### Using Firefox
+
+Open your browser and browse to the hostname of your instance.
+You will see an "insecure" warning, this is because for this lab we used a training certificate authority which is not trusted by our computer.
+![Firefox warning](./images/ff-error.png)
+Click on "Advanced" and then to "View Certificate", here you can see the info about the certificate which we just issued.
+![Firefox bypass button](./images/ff-bypass.png)
+If you click "Accept the risk and continue" you will be presented with our "Hello World" service.
+![Firefox certificate details](./images/ff-cert.png)
+
+#### Using Chrome
+Open your browser and browse to the hostname of your instance.
+You will see an "insecure" warning, this is because for this lab we used a training certificate authority which is not trusted by our computer.
+![Chrome warning](./images/chrome-error.png)
+Type "this is unsafe" on your keyboard (don't worry you won't see any letters appear), this will bypass the warning screen and you will be presented with our "Hello World" service.
+In the top bar click on "Not Secure" then click on "Certificate", here you can see the info about the certificate which we just issued.
+![Chrome certificate details](./images/chrome-cert.png)
+
