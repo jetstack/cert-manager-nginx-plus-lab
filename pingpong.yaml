@@ -6,9 +6,9 @@ metadata:
   namespace: default
 spec:
   secretName: ping-tls
-  duration: 2160h
+  duration: 2160h # 90d
   dnsNames:
-    - curl
+    - ping-service.default.svc.cluster.local
   issuerRef:
     name: venafi-tpp-issuer
     kind: Issuer
@@ -20,7 +20,7 @@ metadata:
   namespace: default
 spec:
   secretName: pong-tls
-  duration: 2160h
+  duration: 2160h # 90d
   dnsNames:
     - pong-service.default.svc.cluster.local
   issuerRef:
@@ -45,7 +45,7 @@ spec:
         app: ping
     spec:
       containers:
-        - image: maartje/tls-pingpong
+        - image: demo.cert-manager.io/pingpong:local
           name: pingpong
           command:
             - /usr/local/bin/pingpong
@@ -85,7 +85,7 @@ spec:
         app: pong
     spec:
       containers:
-        - image: maartje/tls-pingpong
+        - image: demo.cert-manager.io/pingpong:local
           name: pingpong
           command:
             - /usr/local/bin/pingpong

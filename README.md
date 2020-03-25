@@ -393,6 +393,71 @@ $ curl https://localhost:4430 -k -v
 
 Notice that the issuer in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
 
+### Securing inside cluster communication
+The certificates provided by cert-manager can be used to secure communication between workloads in the server.
+In this example we have a ping and a pong service running. These services is secured using a Venafi issued certificate, the services will contact each other securely using this certificate.
+
+First of all we have to build the NGINX Plus Docker image using:
+```console
+$ ./setup-pingpong-image.sh
+```
+
+The deployment of this workload is in `pingpong.yaml`.
+In this case we request a certificate for `ping-service.default.svc.cluster.local` that is valid for 90 days, we do the same for `pong-service.default.svc.cluster.local`.
+```yaml
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: ping-certificate
+  namespace: default
+spec:
+  secretName: ping-tls
+  duration: 2160h # 90d
+  dnsNames:
+    - ping-service.default.svc.cluster.local
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
+```
+
+We can apply this configuration to the cluster using:
+```console
+$ kubectl apply -f pingpong.yaml
+```
+
+Once deployed we can see our workload running:
+```console
+$ kubectl get pods
+sysadmin@C6274862831:~$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+ping-deployment-66bb679c78-fxpj2   1/1     Running   0          34m
+pong-deployment-66c7fc78d8-7mhzh   1/1     Running   0          34m
+```
+We can also see the certificate:
+```console
+$ kubectl get certificates
+NAME               READY   SECRET     AGE
+ping-certificate   True    ping-tls   95m
+pong-certificate   True    pong-tls   95m
+```
+
+These certificates are loaded inside the `pingpong` application, as well as the Certificate Authority certificate our Venafi instance signs certificates with.
+This allows our `ping` and `pong` applications to only trust endpoints secured with our Venafi instance.
+
+### Testing the deployment
+We have configured the Kubernetes Service to expose the `ping` and `pong` services on a dedicated port, you can check these using `kubectl get service`
+```console
+$ kubectl get service
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+ping-service            NodePort    10.96.106.140   <none>        9443:30667/TCP   97m
+pong-service            NodePort    10.96.75.170    <none>        9443:31610/TCP   97m
+```
+In the example above we can find `ping` on port 30667 and `pong` on port `31610`
+If you open the browser and go to `https://<hostname>:<port>` it will display the certificate details of the other service that it internally contacted inside the Kubernetes cluster.
+
+![pingpong certificate details](./images/pingpong.png)
+
 ### Securing an Ingress
 
 cert-manager can also be used to secure incoming traffic to your cluster.
