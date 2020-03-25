@@ -1,0 +1,138 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: ping-certificate
+  namespace: default
+spec:
+  secretName: ping-tls
+  duration: 2160h
+  dnsNames:
+    - curl
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: pong-certificate
+  namespace: default
+spec:
+  secretName: pong-tls
+  duration: 2160h
+  dnsNames:
+    - pong-service.default.svc.cluster.local
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
+---
+apiVersion:  apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ping
+  name: ping-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ping
+  template:
+    metadata:
+      labels:
+        app: ping
+    spec:
+      containers:
+        - image: maartje/tls-pingpong
+          name: pingpong
+          command:
+            - /usr/local/bin/pingpong
+            - -endpoint=https://pong-service.default.svc.cluster.local:9443/ping
+            - -ca-file=/etc/ssl/private/tls.crt
+            - -cert-file=/etc/ssl/private/tls.crt
+            - -key-file=/etc/ssl/private/tls.key
+          volumeMounts:
+            - mountPath: "/etc/ssl/private"
+              name: ping-tls
+              readOnly: true
+          ports:
+            - containerPort: 8443
+              name: internal-https
+            - containerPort: 9443
+              name: external-https
+      volumes:
+        - name: ping-tls
+          secret:
+            secretName: ping-tls
+---
+apiVersion:  apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pong
+  name: pong-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pong
+  template:
+    metadata:
+      labels:
+        app: pong
+    spec:
+      containers:
+        - image: maartje/tls-pingpong
+          name: pingpong
+          command:
+            - /usr/local/bin/pingpong
+            - -endpoint=https://ping-service.default.svc.cluster.local:9443/ping
+            - -ca-file=/etc/ssl/private/tls.crt
+            - -cert-file=/etc/ssl/private/tls.crt
+            - -key-file=/etc/ssl/private/tls.key
+          volumeMounts:
+            - mountPath: "/etc/ssl/private"
+              name: pong-tls
+              readOnly: true
+          ports:
+            - containerPort: 8443
+              name: internal-https
+            - containerPort: 9443
+              name: external-https
+      volumes:
+        - name: pong-tls
+          secret:
+            secretName: pong-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ping-service
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - name: https
+      port: 9443
+      protocol: TCP
+      targetPort: external-https
+  selector:
+    app: ping
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pong-service
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - name: https
+      port: 9443
+      protocol: TCP
+      targetPort: external-https
+  selector:
+    app: pong
