@@ -213,7 +213,8 @@ Now this is set up and ready to go!
 
 ### Issuing a Certificate
 
-Now we have everything set up we can issue a Certificate from our Venafi TPP instance. 
+Now we have everything set up we can issue a Certificate from our Venafi TPP instance.
+Extra policies set inside the Venafi TPP will be followed when creating a certificate for use with cert-manager.
 Open the `certificate.yaml` file.
 ```yaml
 ---
@@ -224,7 +225,6 @@ metadata:
   namespace: default
 spec:
   secretName: demo-tls
-  duration: 2160h # 90d
   dnsNames:
     - demo.example.com
   issuerRef:
@@ -332,7 +332,7 @@ $ ./setup-docker-nginx-plus.sh
 ```
 
 The deployment of this workload is in `workload.yaml`. The important part here is teh Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
-In this case we request a certificate for `workload.demo.example.com` that is valid for 90 days.
+In this case we request a certificate for `workload.demo.example.com` that is issued with the `venafi-tpp-issuer` Issuer we created before.
 ```yaml
 ---
 apiVersion: cert-manager.io/v1alpha2
@@ -342,7 +342,6 @@ metadata:
   namespace: default
 spec:
   secretName: workload-tls
-  duration: 2160h # 90d
   dnsNames:
     - workload.demo.example.com
   issuerRef:
