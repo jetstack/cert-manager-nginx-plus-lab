@@ -6,7 +6,6 @@ metadata:
   namespace: default
 spec:
   secretName: demo-tls
-  duration: 2160h # 90d
   dnsNames:
     - demo.example.com
   issuerRef:
