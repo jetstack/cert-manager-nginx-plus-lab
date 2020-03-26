@@ -393,9 +393,9 @@ $ curl https://localhost:4430 -k -v
 
 Notice that the issuer in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
 
-### Securing inside cluster communication
-The certificates provided by cert-manager can be used to secure communication between workloads in the server.
-In this example we have a ping and a pong service running. These services is secured using a Venafi issued certificate, the services will contact each other securely using this certificate.
+### Securing Inter-Container Communication
+The certificates provided by cert-manager can be used to secure communication between workloads in the cluster.
+In this example we have a ping and a pong service running. These services are secured using a Venafi issued certificate, the services will contact each other securely using this certificate.
 
 First of all we have to build the NGINX Plus Docker image using:
 ```console
