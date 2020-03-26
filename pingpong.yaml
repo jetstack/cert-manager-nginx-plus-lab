@@ -6,7 +6,6 @@ metadata:
   namespace: default
 spec:
   secretName: ping-tls
-  duration: 2160h # 90d
   dnsNames:
     - ping-service.default.svc.cluster.local
   issuerRef:
@@ -20,7 +19,6 @@ metadata:
   namespace: default
 spec:
   secretName: pong-tls
-  duration: 2160h # 90d
   dnsNames:
     - pong-service.default.svc.cluster.local
   issuerRef:

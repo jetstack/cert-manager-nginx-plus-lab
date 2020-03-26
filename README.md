@@ -403,7 +403,7 @@ $ ./setup-pingpong-image.sh
 ```
 
 The deployment of this workload is in `pingpong.yaml`.
-In this case we request a certificate for `ping-service.default.svc.cluster.local` that is valid for 90 days, we do the same for `pong-service.default.svc.cluster.local`.
+In this case we request a certificate for `ping-service.default.svc.cluster.local`, we do the same for `pong-service.default.svc.cluster.local`.
 ```yaml
 ---
 apiVersion: cert-manager.io/v1alpha2
@@ -413,7 +413,6 @@ metadata:
   namespace: default
 spec:
   secretName: ping-tls
-  duration: 2160h # 90d
   dnsNames:
     - ping-service.default.svc.cluster.local
   issuerRef:
