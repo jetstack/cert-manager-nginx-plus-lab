@@ -537,3 +537,23 @@ Type "this is unsafe" on your keyboard (don't worry you won't see any letters ap
 In the top bar click on "Not Secure" then click on "Certificate", here you can see the info about the certificate which we just issued.
 ![Chrome certificate details](./images/chrome-cert.png)
 
+### Troubleshooting
+In the directory `mistakes` we find several YAML files, each one of them has one or several mistakes.
+The goal here is to apply them one by one to the cluster, troubleshoot the issue, fix it in the file and re-apply it.
+
+For example we're applying `mistake-1`:
+```console
+$ kubectl apply -f mistakes/mistake-1.yaml
+```
+
+After this you can troubleshoot the issue.
+
+You can apply any changes using the same command:
+```console
+$ kubectl apply -f mistakes/mistake-1.yaml
+```
+
+TIP: if you want to start over you can delete the applied resources using:
+```console
+$ kubectl delete -f mistakes/mistake-1.yaml
+```

@@ -1,0 +1,22 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: mistake-4
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    certmanager.io/issuer: "venafi-tpp-issuer"
+spec:
+  tls:
+    - hosts:
+        - hello-world.example.com
+      secretName: mistake-4-tls
+  rules:
+    - host: hello-world.example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: hello-world-service
+              servicePort: 80

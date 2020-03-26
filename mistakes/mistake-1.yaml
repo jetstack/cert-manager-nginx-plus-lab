@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: mistake-1
+spec:
+  secretName: mistake-1-secret
+  dnsNames:
+  - foo.example.com
+  - bar.example.com
+  issuerRef:
+    name: vanafi-tpp-issuer
+    kind: Issuer

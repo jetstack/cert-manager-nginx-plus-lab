@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tpp-mistake-2-secret
+data:
+  password: ZHVtbXkK
+  username: dHBwYWRtaW4=
+type: Opaque
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: venafi-mistake-2-tpp-issuer
+spec:
+  venafi:
+    zone: Kubernetes
+    tpp:
+      url: https://071919191.dev.lab.venafi.com/vedsdk
+      credentialsRef:
+        name: tpp-mistake-2-secret
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: mistake-2
+spec:
+  secretName: mistake-2-secret
+  dnsNames:
+  - foo.example.com
+  - bar.example.com
+  issuerRef:
+    name: venafi-mistake-2-tpp-issuer
+    kind: Issuer
