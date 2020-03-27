@@ -448,10 +448,11 @@ We have configured the Kubernetes Service to expose the `ping` and `pong` servic
 ```console
 $ kubectl get service
 NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
-ping-service            NodePort    10.96.106.140   <none>        9443:30667/TCP   97m
-pong-service            NodePort    10.96.75.170    <none>        9443:31610/TCP   97m
+ping-service            NodePort    10.96.16.189    <none>        8443:30701/TCP,9443:32719/TCP   3h7m
+pong-service            NodePort    10.96.148.241   <none>        8443:30530/TCP,9443:31017/TCP   3h7m
 ```
-In the example above we can find `ping` on port 30667 and `pong` on port `31610`
+We see we have 2 exposed ports here, we want to use 9443, this is where the example app displays a webpage.
+In the example above we can find `ping`'s externam service on port 32719 and `pong`'s service on port 31017.
 If you open the browser and go to `https://<hostname>:<port>` it will display the certificate details of the other service that it internally contacted inside the Kubernetes cluster.
 
 ![pingpong certificate details](./images/pingpong.png)
