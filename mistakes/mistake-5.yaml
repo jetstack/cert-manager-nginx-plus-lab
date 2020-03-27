@@ -9,7 +9,7 @@ metadata:
   name: tpp-mistake-5-secret
   namespace: mistake-5
 data:
-  password: <add password>
+  password: UGFzc3dvcmQxMjMhCg==
   username: dHBwYWRtaW4=
 type: Opaque
 ---
