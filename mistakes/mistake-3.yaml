@@ -1,0 +1,12 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: mistake-3
+spec:
+  secretName: mistake-3-secret
+  dnsNames:
+  - cert-manager.lab.google.com
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
