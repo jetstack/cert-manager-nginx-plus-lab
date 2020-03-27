@@ -13,7 +13,7 @@ metadata:
   name: venafi-mistake-2-tpp-issuer
 spec:
   venafi:
-    zone: Kubernetes
+    zone: "TLS/SSL\\Certificates\\Jetstack"
     tpp:
       url: https://071919191.dev.lab.venafi.com/vedsdk
       credentialsRef:
