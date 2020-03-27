@@ -33,3 +33,7 @@ tool kind create cluster --image "kindest/node:$VERSION" --config ./cluster.yaml
 echo "Setting up kubectl.."
 sudo cp "${REPO_ROOT}/tools/kubectl.sh" /usr/local/bin/kubectl
 sudo chmod +x /usr/local/bin/kubectl
+
+if ! grep -q "kubectl completion bash" ~/.bashrc; then
+    echo 'source <(kubectl completion bash)' >>~/.bashrc
+fi
