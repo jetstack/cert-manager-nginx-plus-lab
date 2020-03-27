@@ -84,14 +84,14 @@ func main() {
 		TLSConfig: tlsConfig,
 	}
 	go func() {
-		log.Fatal(internalServer.ListenAndServeTLS(certFile, keyFile)) // run internal TLS auth only endpoint
+		log.Println(internalServer.ListenAndServeTLS(certFile, keyFile)) // run internal TLS auth only endpoint
 	}()
 
 	externalServer := &http.Server{
 		Addr: ":9443",
 	}
 	go func() {
-		log.Fatal(externalServer.ListenAndServeTLS(certFile, keyFile)) // run external endpoint where no auth is needed
+		log.Println(externalServer.ListenAndServeTLS(certFile, keyFile)) // run external endpoint where no auth is needed
 	}()
 
 	go reloadOnTLSChange([]*http.Server{internalServer, externalServer})
@@ -169,12 +169,13 @@ func reloadOnTLSChange(servers []*http.Server) {
 		}
 
 		if !bytes.Equal(newCert, originalCert) {
+			originalCert = newCert
 			log.Println("Certificate renewed")
 			for _, server := range servers {
 				// stop and start server with new TLS cert
 				server.Close()
 				go func(s *http.Server) {
-					log.Fatal(s.ListenAndServeTLS(certFile, keyFile))
+					log.Println(s.ListenAndServeTLS(certFile, keyFile))
 				}(server)
 			}
 		}
