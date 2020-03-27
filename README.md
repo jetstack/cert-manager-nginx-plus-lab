@@ -418,8 +418,8 @@ spec:
     name: venafi-tpp-issuer
     kind: Issuer
 ```
-
-We can apply this configuration to the cluster using:
+First we have to open the `pingpong.yaml` file, add the URL to your Venafi instance and save it again.
+After that we can apply this configuration to the cluster using:
 ```console
 $ kubectl apply -f pingpong.yaml
 ```
