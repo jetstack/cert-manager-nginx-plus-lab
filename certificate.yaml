@@ -10,4 +10,4 @@ spec:
     - demo.example.com
   issuerRef:
     name: venafi-tpp-issuer
-    kind: Issue
+    kind: Issuer
