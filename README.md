@@ -197,7 +197,7 @@ metadata:
   namespace: default
 spec:
   venafi:
-    zone: Kubernetes
+    zone: "TLS/SSL\\Certificates\\Jetstack"
     tpp:
       url: https://<instance>/vedsdk # Change this to the URL of your TPP instance
       credentialsRef:
