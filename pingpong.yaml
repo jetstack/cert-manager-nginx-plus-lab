@@ -1,3 +1,15 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: venafi-tpp-pingpong-issuer
+  namespace: default
+spec:
+  venafi:
+    zone: "TLS/SSL\\Certificates\\Jetstack-short"
+    tpp:
+      url: https://<instance hostname>/vedsdk # Change this to the URL of your TPP instance
+      credentialsRef:
+        name: tpp-auth-secret
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
@@ -5,11 +17,12 @@ metadata:
   name: ping-certificate
   namespace: default
 spec:
+  renewBefore: 30m
   secretName: ping-tls
   dnsNames:
     - ping-service.default.svc.cluster.local
   issuerRef:
-    name: venafi-tpp-issuer
+    name: venafi-tpp-pingpong-issuer
     kind: Issuer
 ---
 apiVersion: cert-manager.io/v1alpha2
@@ -18,11 +31,12 @@ metadata:
   name: pong-certificate
   namespace: default
 spec:
+  renewBefore: 30m
   secretName: pong-tls
   dnsNames:
     - pong-service.default.svc.cluster.local
   issuerRef:
-    name: venafi-tpp-issuer
+    name: venafi-tpp-pingpong-issuer
     kind: Issuer
 ---
 apiVersion:  apps/v1
@@ -47,7 +61,7 @@ spec:
           name: pingpong
           command:
             - /usr/local/bin/pingpong
-            - -endpoint=https://pong-service.default.svc.cluster.local:9443/ping
+            - -endpoint=https://pong-service.default.svc.cluster.local:8443/ping
             - -ca-file=/etc/ssl/private/tls.crt
             - -cert-file=/etc/ssl/private/tls.crt
             - -key-file=/etc/ssl/private/tls.key
@@ -87,7 +101,7 @@ spec:
           name: pingpong
           command:
             - /usr/local/bin/pingpong
-            - -endpoint=https://ping-service.default.svc.cluster.local:9443/ping
+            - -endpoint=https://ping-service.default.svc.cluster.local:8443/ping
             - -ca-file=/etc/ssl/private/tls.crt
             - -cert-file=/etc/ssl/private/tls.crt
             - -key-file=/etc/ssl/private/tls.key
@@ -113,6 +127,10 @@ metadata:
 spec:
   type: NodePort
   ports:
+    - name: internal-https
+      port: 8443
+      protocol: TCP
+      targetPort: internal-https
     - name: https
       port: 9443
       protocol: TCP
@@ -128,6 +146,10 @@ metadata:
 spec:
   type: NodePort
   ports:
+    - name: internal-https
+      port: 8443
+      protocol: TCP
+      targetPort: internal-https
     - name: https
       port: 9443
       protocol: TCP
