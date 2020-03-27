@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
@@ -8,7 +9,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -71,24 +75,31 @@ func main() {
 	}
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	// Configuring TLS Client auth
-	// Currently disabled
-	/*
-		tlsConfig := &tls.Config{
-			ClientCAs:  caCertPool,
-			ClientAuth: tls.RequireAndVerifyClientCert,
-		}
-		server := &http.Server{
-			Addr:      ":8443",
-			TLSConfig: tlsConfig,
-		}
-		go func() {
-			log.Fatal(server.ListenAndServeTLS(certFile, keyFile)) // run internal TLS auth only endpoint
-		}()
+	tlsConfig := &tls.Config{
+		ClientCAs:  caCertPool,
+		ClientAuth: tls.RequireAndVerifyClientCert,
+	}
+	internalServer := &http.Server{
+		Addr:      ":8443",
+		TLSConfig: tlsConfig,
+	}
+	go func() {
+		log.Fatal(internalServer.ListenAndServeTLS(certFile, keyFile)) // run internal TLS auth only endpoint
+	}()
 
-	*/
+	externalServer := &http.Server{
+		Addr: ":9443",
+	}
+	go func() {
+		log.Fatal(externalServer.ListenAndServeTLS(certFile, keyFile)) // run external endpoint where no auth is needed
+	}()
 
-	log.Fatal(http.ListenAndServeTLS(":9443", certFile, keyFile, nil)) // run browser accessible endpoint to show info
+	go reloadOnTLSChange([]*http.Server{internalServer, externalServer})
+
+	// waiting for a signal to exit
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	<-sigs
 }
 
 func serveRoot(w http.ResponseWriter, r *http.Request) {
@@ -123,15 +134,15 @@ func servePing(w http.ResponseWriter, r *http.Request) {
 
 func callServer() (*http.Response, error) {
 	// Load client cert
-	/*cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, err
-	}*/
+	}
 
 	// Setup HTTPS client
 	tlsConfig := &tls.Config{
-		//Certificates: []tls.Certificate{cert},
-		RootCAs: caCertPool,
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      caCertPool,
 	}
 	tlsConfig.BuildNameToCertificate()
 	c := &http.Client{
@@ -141,4 +152,31 @@ func callServer() (*http.Response, error) {
 	}
 
 	return c.Get(endpoint)
+}
+
+// poor way to reload on cert renewal, works for this demo
+func reloadOnTLSChange(servers []*http.Server) {
+	originalCert, err := ioutil.ReadFile(certFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		time.Sleep(time.Second)
+		newCert, err := ioutil.ReadFile(certFile)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		if !bytes.Equal(newCert, originalCert) {
+			log.Println("Certificate renewed")
+			for _, server := range servers {
+				// stop and start server with new TLS cert
+				server.Close()
+				go func(s *http.Server) {
+					log.Fatal(s.ListenAndServeTLS(certFile, keyFile))
+				}(server)
+			}
+		}
+	}
 }
