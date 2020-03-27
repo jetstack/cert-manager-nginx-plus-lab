@@ -452,7 +452,7 @@ ping-service            NodePort    10.96.16.189    <none>        8443:30701/TCP
 pong-service            NodePort    10.96.148.241   <none>        8443:30530/TCP,9443:31017/TCP   3h7m
 ```
 We see we have 2 exposed ports here, we want to use 9443, this is where the example app displays a webpage.
-In the example above we can find `ping`'s externam service on port 32719 and `pong`'s service on port 31017.
+In the example above we can find `ping`'s external service on port 32719 and `pong`'s service on port 31017.
 If you open the browser and go to `https://<hostname>:<port>` it will display the certificate details of the other service that it internally contacted inside the Kubernetes cluster.
 
 ![pingpong certificate details](./images/pingpong.png)
