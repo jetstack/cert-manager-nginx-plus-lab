@@ -17,18 +17,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-VERSION="v1.17.0"
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")" && pwd)}"
 
 source "${REPO_ROOT}/tools/lib.sh"
 
-echo "Setting up a Kubernetes cluster..."
-tool kind create cluster --image "kindest/node:$VERSION" --config ./cluster.yaml
-
-echo "Setting up kubectl.."
-sudo cp "${REPO_ROOT}/tools/kubectl.sh" /usr/local/bin/kubectl
-sudo chmod +x /usr/local/bin/kubectl
-
-if ! grep -q "kubectl completion bash" ~/.bashrc; then
-    echo 'source <(kubectl completion bash)' >>~/.bashrc
-fi
+echo "Installing docker..."
+curl https://get.docker.com | sudo bash
+echo "Giving $USER permissions to use Docker"
+sudo setfacl -m "user:$USER:rw" /var/run/docker.sock
