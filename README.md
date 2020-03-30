@@ -355,7 +355,7 @@ spec:
 Here we set several x509 subject fields.
 We can apply this the same way as we did with other certificates:
 ```console
-$ kubectl apply -f certificate.yaml
+$ kubectl apply -f certificate-subject.yaml
 ```
 
 When we go look inside the TPP Admin interface we will see the values are added to the certificate:
