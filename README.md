@@ -328,6 +328,39 @@ tls.key:  1679 bytes
 
 We now see `tls.crt` has the certificate in it.
 
+
+#### Giving a Certificate Subject
+You can also add extra subject information inside cert, an example of this can be found in `certificate-subject.yaml``
+```yaml
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: corp-certificate
+spec:
+  organization:
+    - Example Demo Corp
+  subject:
+    countries:
+      - UK
+    organizationalUnits:
+      - Training
+    streetAddresses:
+      - 1 Demo Loop
+    provinces:
+      - London
+  [...]
+```
+
+Here we set several x509 subject fields.
+We can apply this the same way as we did with other certificates:
+```console
+$ kubectl apply -f certificate.yaml
+```
+
+When we go look inside the TPP Admin interface we will see the values are added to the certificate:
+![x509 subject fields in TPP Admin](./images/subject.png)
+
 ### Securing Workload
 cert-manager can be used to manage certificates for workloads on the cluster.
 In this example we have an NGINX Plus server running with a port exposed. This service is secured using a Venafi issued certificate.
