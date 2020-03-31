@@ -428,8 +428,22 @@ spec:
     name: venafi-tpp-issuer
     kind: Issuer
 ```
+First we have to open the `pingpong.yaml` file, here you will see our new Issuer resource we will use for this example.
+This issuer is linked to a Venafi policy that issues certificates with client and server auth usages set, and has a shorter lifespan.
+```yaml
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: venafi-tpp-pingpong-issuer
+spec:
+  venafi:
+    zone: "TLS/SSL\\Certificates\\Jetstack-short"
+    tpp:
+      url: https://<instance hostname>/vedsdk # Change this to the URL of your TPP instance
+```
 
-We can apply this configuration to the cluster using:
+Add the hostname of your TPP instance where there is currently `<instance hostname>`, then save the file.
+After that we can apply this configuration to the cluster using:
 ```console
 $ kubectl apply -f pingpong.yaml
 ```
