@@ -137,11 +137,15 @@ The Ingress controller in Kubernetes sits on the edge and is responsible for rou
 NGINX acts here as a reverse proxy server that forwards traffic to the internal services as well as handling TLS.
 This lab gives you the option between using the open-source version of NGINX or the NGINX Plus.
 
+**NOTE: The lab instructor will tell you which version to use.**
 
 You can install the open source version of the NGINX ingress controller use:
 ```console
 $ ./setup-nginx.sh
 ```
+
+NOTE: You can read more about installing Nginx Ingress OSS at: [NGINX OSS: Installation with Manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/).
+
 For NGINX Plus you can use the following:
 First of all you need the `nginx-repo.crt` and `nginx-repo.key` files placed in the root of this repository.
 Once they are there you can run:
@@ -169,6 +173,8 @@ Here you will see cert-manager itself run along with 2 other components:
 * A webhook server to provide dynamic admission control over cert-manager resources. This means that cert-manager benefits from most of the same behavior that core Kubernetes resource have.
 * The CA injector controller is responsible for injecting the CA bundle into the webhook in order to allow the Kubernetes to ‘trust’ the webhook API server.
 
+Wait until all the cert-manager pods have `STATUS: Running`.
+
 ## Issuing certificates
 
 ### Setting up Venafi TPP
@@ -184,6 +190,9 @@ $ kubectl create secret generic \
        --from-literal=username='YOUR_TPP_USERNAME_HERE' \
        --from-literal=password='YOUR_TPP_PASSWORD_HERE'
 ```
+
+**NOTE: The TPP credentials will be provided by the lab instructor.**
+
 These are stored inside the Kubernetes cluster's secrets storage for the default [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
 Now that we have our credentials set up we need to set up the [Issuer](https://cert-manager.io/docs/concepts/issuer/) for cert-manager.
@@ -214,10 +223,23 @@ spec:
         name: tpp-auth-secret
 ```
 
+**NOTE: The TPP URL can be found in the CloudShare > Environments > [ENVIRONMENT_NAME] > Windows Server 2016 > More Details > Web Access > Web SDK**. Copy and paste that URL into the Issuer file above.
+
 Now we can apply this configuration to the cluster using:
 ```console
 $ kubectl apply -f venafi-issuer.yaml
 ```
+
+`cert-manager` will now connect to the TPP URL using the supplied credentials.
+This will take a few seconds.
+You can check the status, using:
+
+```console
+kubectl describe issuer venafi-tpp-issuer
+```
+
+You should see a message `Verified issuer with Venafi server`.
+If not, check for error messages and check that you have used the correct TPP credentials and URL.
 
 Now this is set up and ready to go!
 
@@ -244,6 +266,7 @@ spec:
 
 Here we see a certificate resource for `demo.example.com` issued by the `venafi-tpp-issuer` we created before.
 We can add it to our cluster using:
+
 ```console
 $ kubectl apply -f certificate.yaml
 ```
@@ -369,11 +392,6 @@ In this example we have an NGINX Plus server running with a port exposed. This s
 
 This is a diagram of what we're building in this part of the lab.
 
-First of all we have to build the NGINX Plus Docker image using:
-```console
-$ ./setup-docker-nginx-plus.sh
-```
-
 The deployment of this workload is in `workload.yaml`. The important part here is teh Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
 In this case we request a certificate for `workload.demo.example.com` that is issued with the `venafi-tpp-issuer` Issuer we created before.
 ```yaml
@@ -400,7 +418,6 @@ $ kubectl apply -f workload.yaml
 Once deployed we can see our workload running:
 ```console
 $ kubectl get pods
-sysadmin@C6274862831:~$ kubectl get pods
 NAME                              READY   STATUS    RESTARTS   AGE
 nginx-workload-7d5fbb6f48-dz2wb   1/1     Running   0          1m
 ```
@@ -411,7 +428,7 @@ NAME                          READY   SECRET            AGE
 workload-certificate          True    workload-tls      1m
 ```
 
-We see the `-certificate` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
+We see the `workload-certificate` certificate being ready and stored as `workload-tls` inside the Kubernetes secret store.
 This secret is then attached to the container for NGINX to pick up the certificate and private key.
 
 ### Testing the deployment
@@ -421,7 +438,7 @@ The workload is exposed on the server on port `4430`
 You can see it being served using:
 
 ```console
-$ curl https://localhost:4430 -k -v
+$ curl -k -v https://localhost:4430 > /dev/null
 [...]
 * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
 * ALPN, server accepted to use http/1.1
@@ -484,7 +501,6 @@ $ kubectl apply -f pingpong.yaml
 Once deployed we can see our workload running:
 ```console
 $ kubectl get pods
-sysadmin@C6274862831:~$ kubectl get pods
 NAME                               READY   STATUS    RESTARTS   AGE
 ping-deployment-66bb679c78-fxpj2   1/1     Running   0          34m
 pong-deployment-66c7fc78d8-7mhzh   1/1     Running   0          34m
