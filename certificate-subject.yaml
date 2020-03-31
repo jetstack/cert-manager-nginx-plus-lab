@@ -1,0 +1,24 @@
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: corp-certificate
+  namespace: default
+spec:
+  organization:
+    - Example Demo Corp
+  subject:
+    countries:
+      - UK
+    organizationalUnits:
+      - Training
+    streetAddresses:
+      - 1 Demo Loop
+    provinces:
+      - London
+  secretName: corp-tls
+  dnsNames:
+    - corp.example.com
+  issuerRef:
+    name: venafi-tpp-issuer
+    kind: Issuer
