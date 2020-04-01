@@ -30,11 +30,14 @@ spec:
         app: nginx-workload
     spec:
       containers:
-        - image: demo.cert-manager.io/nginx-plus:local
+        - image: nginx:1.9.11
           name: nginx-workload
           volumeMounts:
             - mountPath: "/etc/nginx/ssl"
               name: workload-tls
+              readOnly: true
+            - mountPath: "/etc/nginx/conf.d"
+              name: workload-config
               readOnly: true
           ports:
             - containerPort: 443
@@ -44,6 +47,34 @@ spec:
         - name: workload-tls
           secret:
             secretName: workload-tls
+        - name: workload-config
+          configMap:
+            name: nginx-workload-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-workload-config
+  namespace: default
+data:
+  default.conf: |
+   server {
+       listen       443 ssl default_server;
+       server_name  workload.demo.cert-manager.io;
+
+       ssl_certificate     /etc/nginx/ssl/tls.crt;
+       ssl_certificate_key /etc/nginx/ssl/tls.key;
+
+       location / {
+           root   /usr/share/nginx/html;
+           index  index.html index.htm;
+       }
+
+       error_page   500 502 503 504  /50x.html;
+       location = /50x.html {
+           root   /usr/share/nginx/html;
+       }
+   }
 ---
 apiVersion: v1
 kind: Service

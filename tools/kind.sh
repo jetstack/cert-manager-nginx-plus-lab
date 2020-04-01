@@ -39,10 +39,10 @@ if ! test -f "${kind}"; then
     detect_and_set_goos_goarch
 
     if [ "$GOOS" = "darwin" ]; then
-        curl -Lo "${kind}" "https://github.com/kubernetes-sigs/kind/releases/download/${VERSION}/kind-darwin-amd64"
+        curl -sSLo "${kind}" "https://github.com/kubernetes-sigs/kind/releases/download/${VERSION}/kind-darwin-amd64"
         check_sha "${kind}" "11b8a7fda7c9d6230f0f28ffe57831a7227c0655dfb8d38e838e8f03db6612de"
     elif [ "$GOOS" = "linux" ]; then
-        curl -Lo "${kind}" "https://github.com/kubernetes-sigs/kind/releases/download/${VERSION}/kind-linux-amd64"
+        curl -sSLo "${kind}" "https://github.com/kubernetes-sigs/kind/releases/download/${VERSION}/kind-linux-amd64"
         check_sha "${kind}" "0e07d5a9d5b8bf410a1ad8a7c8c9c2ea2a4b19eda50f1c629f1afadb7c80fae7"
     else
     	echo "Unsupported OS: $GOOS"
