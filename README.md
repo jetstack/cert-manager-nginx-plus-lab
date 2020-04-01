@@ -510,9 +510,44 @@ pong-service            NodePort    10.96.148.241   <none>        8443:30530/TCP
 ```
 We see we have 2 exposed ports here, we want to use 9443, this is where the example app displays a webpage.
 In the example above we can find `ping`'s external service on port 32719 and `pong`'s service on port 31017.
-If you open the browser and go to `https://<hostname>:<port>` it will display the certificate details of the other service that it internally contacted inside the Kubernetes cluster.
+These are [NodePort Services](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport),
+which means that Kubernetes will open a TCP port on each of the cluster nodes
+and forward connections to the Pods that are selected by that service.
 
-![pingpong certificate details](./images/pingpong.png)
+In order to connect, we first need to discover the IP address of the Node, using:
+
+```console
+$ kubectl describe nodes  | grep InternalIP
+
+InternalIP:  172.17.0.2
+```
+
+In this example the node IP address is `172.17.0.2`
+
+You can now use `curl -k https://<internal-ip>:<port>` to display the certificate details of the other service that it internally contacted inside the Kubernetes cluster. E.g.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>TLS Ping Pong</title>
+</head>
+<body>
+    <p>
+        https://ping-service.default.svc.cluster.local:8443/ping replied with the following certificate:
+        <ul>
+            <li>Server name: ping-service.default.svc.cluster.local</li>
+            <li>Issuer: venafidemo-TPP-CA</li>
+            <li>Serial: 1048135025408240948839586377085850473965027535</li>
+            <li>Expiry date: 2020-04-01 16:00:19 &#43;0000 UTC</li>
+        </ul>
+    </p>
+</body>
+</html>
+```
 
 ### Securing an Ingress
 
