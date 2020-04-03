@@ -9,32 +9,32 @@ metadata:
   name: tpp-mistake-5-secret
   namespace: mistake-5
 data:
-  password: UGFzc3dvcmQxMjMhCg==
+  password: UGFzc3dvcmQxMjMh
   username: dHBwYWRtaW4=
 type: Opaque
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Issuer
 metadata:
-  name: venafi-mistake-2-tpp-issuer
+  name: venafi-mistake-5-tpp-issuer
   namespace: mistake-5
 spec:
   venafi:
     zone: "TLS/SSL\\Certificates\\Jetstack"
     tpp:
-      url: https://071919191.dev.lab.venafi.com/vedsdk
+      url: https://<instance>/vedsdk # Change this to the URL of your TPP instance
       credentialsRef:
-        name: tpp-mistake-2-secret
+        name: tpp-mistake-5-secret
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: mistake-2
+  name: mistake-5
 spec:
-  secretName: mistake-2-secret
+  secretName: mistake-5-secret
   dnsNames:
   - foo.example.com
   - bar.example.com
   issuerRef:
-    name: venafi-mistake-2-tpp-issuer
+    name: venafi-mistake-5-tpp-issuer
     kind: Issuer
