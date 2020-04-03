@@ -1,3 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tpp-mistake-3-secret
+data:
+  username: dHBwYWRtaW4=
+  password: UGFzc3dvcmQxMjMh
+type: Opaque
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: venafi-mistake-3-tpp-issuer
+spec:
+  venafi:
+    zone: "TLS/SSL\\Certificates\\Jetstack-restricted"
+    tpp:
+      url: https://<instance>/vedsdk # Change this to the URL of your TPP instance
+      credentialsRef:
+        name: tpp-mistake-3-secret
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
@@ -5,8 +25,7 @@ metadata:
   name: mistake-3
 spec:
   secretName: mistake-3-secret
-  dnsNames:
-  - cert-manager.lab.google.com
+  commonName: cert-manager.lab.google.com
   issuerRef:
-    name: venafi-tpp-issuer
+    name: venafi-mistake-3-tpp-issuer
     kind: Issuer
