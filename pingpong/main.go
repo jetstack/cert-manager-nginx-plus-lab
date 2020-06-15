@@ -170,14 +170,8 @@ func reloadOnTLSChange(servers []*http.Server) {
 
 		if !bytes.Equal(newCert, originalCert) {
 			originalCert = newCert
-			log.Println("Certificate renewed")
-			for _, server := range servers {
-				// stop and start server with new TLS cert
-				server.Close()
-				go func(s *http.Server) {
-					log.Println(s.ListenAndServeTLS(certFile, keyFile))
-				}(server)
-			}
+			log.Println("Certificate renewed, restarting pod")
+			os.Exit(1)
 		}
 	}
 }
