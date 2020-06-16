@@ -66,6 +66,9 @@ func main() {
 		log.Fatal("Needs -endpoint, -ca-file, -cert-file and -key-file flags")
 	}
 
+	// watch the certificate file on disk
+	go reloadOnTLSChange()
+
 	http.HandleFunc("/", serveRoot)
 	http.HandleFunc("/ping", servePing)
 
@@ -93,8 +96,6 @@ func main() {
 	go func() {
 		log.Println(externalServer.ListenAndServeTLS(certFile, keyFile)) // run external endpoint where no auth is needed
 	}()
-
-	go reloadOnTLSChange([]*http.Server{internalServer, externalServer})
 
 	// waiting for a signal to exit
 	sigs := make(chan os.Signal, 1)
@@ -155,7 +156,7 @@ func callServer() (*http.Response, error) {
 }
 
 // poor way to reload on cert renewal, works for this demo
-func reloadOnTLSChange(servers []*http.Server) {
+func reloadOnTLSChange() {
 	originalCert, err := ioutil.ReadFile(certFile)
 	if err != nil {
 		log.Fatal(err)
@@ -169,15 +170,8 @@ func reloadOnTLSChange(servers []*http.Server) {
 		}
 
 		if !bytes.Equal(newCert, originalCert) {
-			originalCert = newCert
-			log.Println("Certificate renewed")
-			for _, server := range servers {
-				// stop and start server with new TLS cert
-				server.Close()
-				go func(s *http.Server) {
-					log.Println(s.ListenAndServeTLS(certFile, keyFile))
-				}(server)
-			}
+			log.Println("Certificate renewed, restarting pod")
+			os.Exit(1)
 		}
 	}
 }
