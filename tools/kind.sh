@@ -22,7 +22,7 @@ set -o nounset
 set -o pipefail
 
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-VERSION="v0.8.1"
+VERSION="v0.9.0"
 
 source "${REPO_ROOT}/tools/lib.sh"
 
@@ -40,10 +40,10 @@ if ! test -f "${kind}"; then
 
     if [ "$GOOS" = "darwin" ]; then
         curl -sSLo "${kind}" "https://github.com/kubernetes-sigs/kind/releases/download/${VERSION}/kind-darwin-amd64"
-        check_sha "${kind}" "cdd8dfe7dff764429badcd636179b0e3eb937640cfe56749dd9b8f9c048cb7db"
+        check_sha "${kind}" "849034ffaea8a0e50f9153078890318d5863bafe01495418ea0ad037b518de90"
     elif [ "$GOOS" = "linux" ]; then
         curl -sSLo "${kind}" "https://github.com/kubernetes-sigs/kind/releases/download/${VERSION}/kind-linux-amd64"
-        check_sha "${kind}" "781c3db479b805d161b7c2c7a31896d1a504b583ebfcce8fcd49538c684d96bc"
+        check_sha "${kind}" "35a640e0ca479192d86a51b6fd31c657403d2cf7338368d62223938771500dc8"
     else
     	echo "Unsupported OS: $GOOS"
     	exit 1

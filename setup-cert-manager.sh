@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION=v0.14.1
+VERSION=v1.0.3
 
 set -o errexit
 set -o nounset

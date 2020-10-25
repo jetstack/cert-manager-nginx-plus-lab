@@ -23,7 +23,7 @@ set -o pipefail
 
 
 REPO_ROOT="/tmp/cert-manager-venafi-demo"
-VERSION="v1.19.0"
+VERSION="v1.19.3"
 
 # autodetects host GOOS and GOARCH and exports them if not set
 detect_and_set_goos_goarch() {
@@ -88,10 +88,10 @@ if ! test -f "${kubectl}"; then
 
     if [ "$GOOS" = "darwin" ]; then
         curl -Lo "${kubectl}" "https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/darwin/amd64/kubectl"
-        check_sha "${kubectl}" "6bdf76c68849031c4a2a2c339659a6ae8eeb22669dbfe9908cffc41f00d5da0e"
+        check_sha "${kubectl}" "c86f37f2bbac2a0ee1b2d1ea46765fa921bc3143e2531d1676b16d15e485a3bf"
     elif [ "$GOOS" = "linux" ]; then
         curl -Lo "${kubectl}" "https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/linux/amd64/kubectl"
-        check_sha "${kubectl}" "79bb0d2f05487ff533999a639c075043c70a0a1ba25c1629eb1eef6ebe3ba70f"
+        check_sha "${kubectl}" "84eeb8237448e4f431fef0f0ec0ba8b07558d8e52d5a7e89b4ae64dadcffbe66"
     else
     	echo "Unsupported OS: $GOOS"
     	exit 1
