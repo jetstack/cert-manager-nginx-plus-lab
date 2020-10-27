@@ -461,7 +461,7 @@ The deployment of this workload is in `pingpong.yaml`.
 In this case we request a certificate for `ping-service.default.svc.cluster.local`, we do the same for `pong-service.default.svc.cluster.local`.
 ```yaml
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: ping-certificate
@@ -480,7 +480,7 @@ spec:
 First we have to open the `pingpong.yaml` file, here you will see our new Issuer resource we will use for this example.
 This issuer is linked to a Venafi policy that issues certificates with client and server auth usages set, and has a shorter lifespan.
 ```yaml
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: venafi-tpp-pingpong-issuer
