@@ -7,7 +7,7 @@ data:
   password: UGFzc3dvcmQxMjMh
 type: Opaque
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: venafi-mistake-3-tpp-issuer
@@ -19,7 +19,7 @@ spec:
       credentialsRef:
         name: tpp-mistake-3-secret
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: mistake-3

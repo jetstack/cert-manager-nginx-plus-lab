@@ -13,7 +13,7 @@ data:
   username: dHBwYWRtaW4=
 type: Opaque
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: venafi-mistake-5-tpp-issuer
@@ -26,7 +26,7 @@ spec:
       credentialsRef:
         name: tpp-mistake-5-secret
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: mistake-5
