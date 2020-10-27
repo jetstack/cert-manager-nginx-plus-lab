@@ -127,7 +127,7 @@ Once  installed  confirm the installation using `kubectl`:
 ```console
 $ kubectl get nodes
 NAME                 STATUS   ROLES    AGE   VERSION
-kind-control-plane   Ready    master   72s   v1.17.0
+kind-control-plane   Ready    master   72s   v1.19.1
 ```
 You should see the list of nodes in the cluster, in this case it's just one. If you see `NotReady` under status that means not all services have been started yet. You might have to wait a little bit.
 
