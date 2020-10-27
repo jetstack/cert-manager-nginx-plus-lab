@@ -437,16 +437,16 @@ You can see it being served using:
 $ curl -k -v https://localhost:4430 > /dev/null
 [...]
 * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
-* ALPN, server accepted to use http/1.1
+* ALPN, server did not agree to a protocol
 * Server certificate:
-*  subject: O=cert-manager
-*  start date: Feb 20 14:51:12 2020 GMT
-*  expire date: Feb 19 14:51:12 2021 GMT
-*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
+*  subject: O=Example Organization
+*  start date: Oct 27 11:36:17 2020 GMT
+*  expire date: Oct 27 11:36:17 2022 GMT
+*  issuer: DC=com; DC=venafidemo; CN=venafidemo-TPP-CA
 *  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
 ```
 
-Notice that the issuer in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
+Notice that the issuer in this example is being signed by a venafi demo Venafi TPP instance which is not a trusted certificate authority.
 
 ### Securing Inter-Container Communication
 The certificates provided by cert-manager can be used to secure communication between workloads in the cluster.
