@@ -159,7 +159,7 @@ Once NGINX Plus is deployed you can access the dashboard on port `http://<hostna
 Next we're installing cert-manager. cert-manager will allow you to integrate the Venafi platforms with Kubernetes to issue TLS certificates and provide identity management for applications across your cluster
 To install cert-manager run:
 ```console
-$ kubectl apply -f "https://github.com/jetstack/cert-manager/releases/download/v0.14.1/cert-manager.yaml"
+$ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
 ```
 This will install cert-manager in its default configuration inside the cluster. You can see it running using:
 ```console
@@ -209,7 +209,7 @@ Here we see the Issuer configuration.
 Change the URL to the correct instance (this will be provided to you during the lab session), then save it.
 
 ```yaml
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: venafi-tpp-issuer
@@ -250,13 +250,16 @@ Extra policies set inside the Venafi TPP will be followed when creating a certif
 Open the `certificate.yaml` file.
 ```yaml
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: demo-certificate
   namespace: default
 spec:
   secretName: demo-tls
+  subject:
+    organizations:
+      - Example Organization
   dnsNames:
     - demo.example.com
   issuerRef:
@@ -286,33 +289,25 @@ demo-certificate-4260521829   True    10s
 To get more info about `CertificateRequest` resource, including the event history and any errors we can use `kubectl describe`:
 ```console
 $ kubectl describe certificaterequest <name of the CertificateRequest>
-Name:         demo-certificate-4260521829
+Name:         demo-certificate-g8bxc
 Namespace:    default
 Labels:       <none>
-API Version:  cert-manager.io/v1alpha2
+Annotations:  cert-manager.io/certificate-name: demo-certificate
+              cert-manager.io/certificate-revision: 1
+              cert-manager.io/private-key-secret-name: demo-certificate-4m68v
+              venafi.cert-manager.io/pickup-id: \VED\Policy\TLS/SSL\Certificates\Jetstack\demo.example.com
+API Version:  cert-manager.io/v1
 Kind:         CertificateRequest
-Metadata:
-  Creation Timestamp:  2020-03-11T16:18:19Z
-  Generation:          1
-  Owner References:
-    API Version:           cert-manager.io/v1alpha2
-    Block Owner Deletion:  true
-    Controller:            true
-    Kind:                  Certificate
-    Name:                  demo-certificate
-    UID:                   58c9ef95-338a-41a2-a617-6a397b3cdbb9
-  Resource Version:        14429
-  Self Link:               /apis/cert-manager.io/v1alpha2/namespaces/cert-manager/certificaterequests/demo-certificate-4260521829
-  UID:                     66795d81-5ff7-4e89-9ffc-b7863592b95b
+...
 Spec:
-  Csr:       LS0tLS1CRUdJTiBDRVJUSUZJQ0[...]
-  Duration:  2160h0m0s
   Issuer Ref:
-    Kind:  Issuer
-    Name:  venafi-tpp-issuer
+    Kind:   Issuer
+    Name:   venafi-tpp-issuer
+  Request:  LS0tLS1C[...]
 Status:
-  Certificate:  LS0tLS1CRUdJTiBDRVJUSU1[...]
-    Last Transition Time:  2020-03-11T16:18:31Z
+  Certificate:  LS0tLS1C[...]
+  Conditions:
+    Last Transition Time:  2020-08-28T15:47:38Z
     Message:               Certificate fetched from issuer successfully
     Reason:                Issued
     Status:                True
@@ -320,8 +315,8 @@ Status:
 Events:
   Type    Reason             Age   From          Message
   ----    ------             ----  ----          -------
-  Normal  CertificateIssued  67s   cert-manager  Certificate fetched from issuer successfully
-
+  Normal  IssuancePending    110s  cert-manager  Venafi certificate is requested
+  Normal  CertificateIssued  105s  cert-manager  Certificate fetched from issuer successfully
 ```
 
 Here we see our generated CSR and Certificate (both base64 encoded), as well as detailed info of the status of the CertificateRequest. More information about this resource can be found in the [cert-manager documentation](https://cert-manager.io/docs/concepts/certificaterequest/)
@@ -330,22 +325,22 @@ Once we see here that our certificate is issued by the Venafi TPP instance we ca
 ```console
 $ kubectl describe secret demo-tls
 Name:         demo-tls
-Namespace:    cert-manager
+Namespace:    default
 Labels:       <none>
 Annotations:  cert-manager.io/alt-names: demo.example.com
               cert-manager.io/certificate-name: demo-certificate
-              cert-manager.io/common-name:
-              cert-manager.io/ip-sans:
+              cert-manager.io/common-name: 
+              cert-manager.io/ip-sans: 
+              cert-manager.io/issuer-group: 
               cert-manager.io/issuer-kind: Issuer
               cert-manager.io/issuer-name: venafi-tpp-issuer
-              cert-manager.io/uri-sans:
+              cert-manager.io/uri-sans: 
 
 Type:  kubernetes.io/tls
 
 Data
 ====
-ca.crt:   0 bytes
-tls.crt:  3388 bytes
+tls.crt:  3141 bytes
 tls.key:  1679 bytes
 ```
 
@@ -356,13 +351,11 @@ We now see `tls.crt` has the certificate in it.
 You can also add extra subject information inside cert, an example of this can be found in `certificate-subject.yaml``
 ```yaml
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: corp-certificate
 spec:
-  organization:
-    - Example Demo Corp
   subject:
     countries:
       - UK
@@ -392,17 +385,20 @@ In this example we have an NGINX Plus server running with a port exposed. This s
 
 This is a diagram of what we're building in this part of the lab.
 
-The deployment of this workload is in `workload.yaml`. The important part here is teh Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
+The deployment of this workload is in `workload.yaml`. The important part here is the Certificate resource. This resource will tell cert-manager to request a Certificate from the Venafi TPP instance we configured earlier.
 In this case we request a certificate for `workload.demo.example.com` that is issued with the `venafi-tpp-issuer` Issuer we created before.
 ```yaml
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: workload-certificate
   namespace: default
 spec:
   secretName: workload-tls
+  subject:
+    organizations:
+      - Example Organization
   dnsNames:
     - workload.demo.example.com
   issuerRef:
@@ -441,16 +437,16 @@ You can see it being served using:
 $ curl -k -v https://localhost:4430 > /dev/null
 [...]
 * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
-* ALPN, server accepted to use http/1.1
+* ALPN, server did not agree to a protocol
 * Server certificate:
-*  subject: O=cert-manager
-*  start date: Feb 20 14:51:12 2020 GMT
-*  expire date: Feb 19 14:51:12 2021 GMT
-*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
+*  subject: O=Example Organization
+*  start date: Oct 27 11:36:17 2020 GMT
+*  expire date: Oct 27 11:36:17 2022 GMT
+*  issuer: DC=com; DC=venafidemo; CN=venafidemo-TPP-CA
 *  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
 ```
 
-Notice that the issuer in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.
+Notice that the issuer in this example is being signed by a venafi demo Venafi TPP instance which is not a trusted certificate authority.
 
 ### Securing Inter-Container Communication
 The certificates provided by cert-manager can be used to secure communication between workloads in the cluster.
@@ -465,13 +461,16 @@ The deployment of this workload is in `pingpong.yaml`.
 In this case we request a certificate for `ping-service.default.svc.cluster.local`, we do the same for `pong-service.default.svc.cluster.local`.
 ```yaml
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: ping-certificate
   namespace: default
 spec:
   secretName: ping-tls
+  subject:
+    organizations:
+      - Example Organization
   dnsNames:
     - ping-service.default.svc.cluster.local
   issuerRef:
@@ -481,7 +480,7 @@ spec:
 First we have to open the `pingpong.yaml` file, here you will see our new Issuer resource we will use for this example.
 This issuer is linked to a Venafi policy that issues certificates with client and server auth usages set, and has a shorter lifespan.
 ```yaml
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: venafi-tpp-pingpong-issuer
@@ -580,7 +579,7 @@ This can be found in your CloudShare environment under "Connection Details", the
 
 The `cert-manager.io/issuer` annotation tells cert-manager to install a TLS certificate received from the Issuer we installed earlier.
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hello-world-ingress
@@ -588,6 +587,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/issuer: "venafi-tpp-issuer"
+    cert-manager.io/common-name: "<place external hostname here>"
 spec:
   tls:
     - hosts:
@@ -620,10 +620,10 @@ $ curl -k -v https://<hostname>
 * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
 * ALPN, server accepted to use http/1.1
 * Server certificate:
-*  subject: O=cert-manager
-*  start date: Feb 20 14:51:12 2020 GMT
-*  expire date: Feb 19 14:51:12 2021 GMT
-*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
+*  subject: CN=<hostname>
+*  start date: Oct 27 13:33:41 2020 GMT
+*  expire date: Oct 27 13:33:41 2022 GMT
+*  issuer: DC=com; DC=venafidemo; CN=venafidemo-TPP-CA
 *  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
 ```
 Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.

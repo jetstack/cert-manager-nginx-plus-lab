@@ -1,4 +1,4 @@
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: venafi-tpp-pingpong-issuer
@@ -11,7 +11,7 @@ spec:
       credentialsRef:
         name: tpp-auth-secret
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: ping-certificate
@@ -19,13 +19,16 @@ metadata:
 spec:
   renewBefore: 30m
   secretName: ping-tls
+  subject:
+    organizations:
+      - Example Organization
   dnsNames:
     - ping-service.default.svc.cluster.local
   issuerRef:
     name: venafi-tpp-pingpong-issuer
     kind: Issuer
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: pong-certificate
@@ -33,6 +36,9 @@ metadata:
 spec:
   renewBefore: 30m
   secretName: pong-tls
+  subject:
+    organizations:
+      - Example Organization
   dnsNames:
     - pong-service.default.svc.cluster.local
   issuerRef:

@@ -17,7 +17,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-VERSION="v1.17.0"
+VERSION="v1.19.1"
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")" && pwd)}"
 
 source "${REPO_ROOT}/tools/lib.sh"
