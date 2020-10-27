@@ -587,6 +587,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/issuer: "venafi-tpp-issuer"
+    cert-manager.io/common-name: "<place external hostname here>"
 spec:
   tls:
     - hosts:
@@ -619,10 +620,10 @@ $ curl -k -v https://<hostname>
 * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
 * ALPN, server accepted to use http/1.1
 * Server certificate:
-*  subject: O=cert-manager
-*  start date: Feb 20 14:51:12 2020 GMT
-*  expire date: Feb 19 14:51:12 2021 GMT
-*  issuer: DC=local; DC=traininglab; CN=traininglab-Root-CA
+*  subject: CN=<hostname>
+*  start date: Oct 27 13:33:41 2020 GMT
+*  expire date: Oct 27 13:33:41 2022 GMT
+*  issuer: DC=com; DC=venafidemo; CN=venafidemo-TPP-CA
 *  SSL certificate verify result: self signed certificate in certificate chain (19), continuing anyway.
 ```
 Notice that the issue in this example is being signed by a training Venafi TPP instance which is not a trusted certificate authority.

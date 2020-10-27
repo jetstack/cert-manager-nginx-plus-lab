@@ -7,6 +7,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/issuer: "venafi-tpp-issuer"
+    cert-manager.io/common-name: "<place external hostname here>"
 spec:
   tls:
     - hosts:
