@@ -468,6 +468,9 @@ metadata:
   namespace: default
 spec:
   secretName: ping-tls
+  subject:
+    organizations:
+      - Example Organization
   dnsNames:
     - ping-service.default.svc.cluster.local
   issuerRef:
